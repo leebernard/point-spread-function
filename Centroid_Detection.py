@@ -1,5 +1,5 @@
 # pass header data unit.  REMEBER, this is pass-by-reference
-def Bias_Subtract(HDU):
+def bias_subtract(HDU):
     # import needed packages
     # import numpy as np
     # from astropy.io import fits
@@ -45,7 +45,7 @@ def Bias_Subtract(HDU):
 
 
 # calculates bias using a mask routine from photutils
-def Background_Subtract(HDU):
+def background_subtract(HDU):
     # import numpy as np
     # from astropy.io import fits
 
@@ -83,7 +83,7 @@ with fits.open(file_name) as hdu:
     hdu.info()
     data_im1 = hdu[1].data
     # bias subtraction
-    bias_subtracted_im1 = Bias_Subtract(hdu[1])
+    bias_subtracted_im1 = bias_subtract(hdu[1])
 
 # first object
 # Centroid detection:
@@ -97,7 +97,7 @@ xmax = 1540
 Object1_Data = bias_subtracted_im1[ymin:ymax,xmin:xmax]
 
 # Background subtract the object
-Object1_Data, mask = Background_Subtract(Object1_Data)
+Object1_Data, mask = background_subtract(Object1_Data)
 
 # centroid techniques: need to learn the difference3s
 # print('Centroids:')

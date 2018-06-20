@@ -1,5 +1,5 @@
 # pass header data unit.  REMEBER, this is pass-by-reference
-def Bias_Subtract(HDU): 
+def bias_subtract(HDU):
     # import needed packages
     import numpy as np
     from astropy.io import fits
