@@ -1,5 +1,8 @@
-# pass header data unit.  REMEBER, this is pass-by-reference
-def bias_subtract(HDU):
+
+
+# This function takes a header data unit, find the bias data from BIASSEC, and performs bias calculations and
+# subtraction
+def bias_subtract(HDU):  # pass header data unit.  REMEBER, this is pass-by-reference
     # import needed packages
     # import numpy as np
     # from astropy.io import fits
@@ -44,13 +47,13 @@ def bias_subtract(HDU):
     return output_im
 
 
-# calculates bias using a mask routine from photutils
-def background_subtract(HDU):
+# calculates background using a mask routine from photutils. Requires passing a numpy array of image data
+def background_subtract(Im_Data):
     # import numpy as np
     # from astropy.io import fits
 
     # store the data from the HDU argument
-    Im_Data = HDU.data
+    # Im_Data = HDU.data
 
     # Generate mask
     from photutils import make_source_mask
