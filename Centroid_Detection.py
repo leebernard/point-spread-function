@@ -10,7 +10,7 @@ def bias_subtract(HDU):  # pass header data unit.  REMEBER, this is pass-by-refe
     from astropy.stats import sigma_clipped_stats
 
     # Store the data from the HDU argument
-    Im_Data = HDU.data
+    im_data = HDU.data
 
     # pull the bias section information
     Bias_Sec = HDU.header['BIASSEC']
@@ -33,7 +33,7 @@ def bias_subtract(HDU):  # pass header data unit.  REMEBER, this is pass-by-refe
     ymin = int(match[2])
     ymax = int(match[3])
 
-    bias_data = Im_Data[ymin:ymax, xmin:xmax]
+    bias_data = im_data[ymin:ymax, xmin:xmax]
 
     # Calculate the bias, using clipped statistics in case of cosmic ray events, and print the 		#results
     bias_mean, bias_median, bias_std = sigma_clipped_stats(bias_data, sigma=3.0, iters=5)
@@ -43,38 +43,38 @@ def bias_subtract(HDU):  # pass header data unit.  REMEBER, this is pass-by-refe
 
     # calculate and print the bias area statistics, for reference.  DISABLED
     # print('Bias area after subtraction \n Mean: ')
-    output_im = Im_Data - bias_mean
+    output_im = im_data - bias_mean
     return output_im
 
 
 # calculates background using a mask routine from photutils. Requires passing a numpy array of image data
-def background_subtract(Im_Data):
+def background_subtract(im_data):
     # import numpy as np
     # from astropy.io import fits
 
     # store the data from the HDU argument
-    # Im_Data = HDU.data
+    # im_data = HDU.data
 
     # Generate mask
     from photutils import make_source_mask
     from astropy.stats import sigma_clipped_stats
-    mask = make_source_mask(Im_Data, snr=2, npixels=5, dilate_size=11)
+    mask = make_source_mask(im_data, snr=2, npixels=5, dilate_size=11)
 
     # calculate bias using mean
     # clipped stats are used, just in case
-    mean, median, std = sigma_clipped_stats(Im_Data, sigma=3.0, mask=mask)
+    mean, median, std = sigma_clipped_stats(im_data, sigma=3.0, mask=mask)
     print('Background mean: ' + str(mean))
     print('Background median: ' + str(median))
     print('Background standerd deviation: ' + str(std))
 
-    output_im = Im_Data - mean
+    output_im = im_data - mean
 
     return output_im, mask
 
 
 # needed packages
 import numpy as np
-import matplotlib
+# import matplotlib
 import matplotlib.pyplot as plt
 # import re
 
@@ -90,7 +90,7 @@ with fits.open(file_name) as hdu:
 
 # first object
 # Centroid detection:
-from photutils import centroid_com, centroid_1dg, centroid_2dg
+
 
 # arbitrarily choosen object, section manually entered
 ymin = 455
