@@ -148,6 +148,9 @@ def parse_regions(get_data=True):
             # current instance of a region
             current_region = Region()
 
+            # save region definition
+            current_region.region_def = region_str
+
             # region format
             current_region.format = region_system
 
