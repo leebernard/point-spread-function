@@ -151,8 +151,8 @@ def parse_regions(get_data=True):
             # save region definition
             current_region.region_def = region_str
 
-            # region format
-            current_region.format = region_system
+            # region system
+            current_region.system = region_system
 
             # region definition: orgin is lower left, given as x and y coord, with a width and a height
             x_coord = int(region_def[0])

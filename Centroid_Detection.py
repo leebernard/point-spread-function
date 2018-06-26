@@ -22,7 +22,7 @@ with fits.open(file_name) as hdu:
 # Centroid detection:
 
 
-# arbitrarily choosen object, section manually entered
+# arbitrarily chosen object, section manually entered
 ymin = 455
 ymax = 505
 xmin = 1490
