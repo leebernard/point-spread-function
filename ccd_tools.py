@@ -1,8 +1,20 @@
 
 
-# This function takes a header data unit, find the bias data from BIASSEC, and performs bias calculations and
-# subtraction
+
 def bias_subtract(HDU):  # pass header data unit.  REMEBER, this is pass-by-reference
+    """Takes a header data unit, find the bias data from BIASSEC, and performs bias calculations and subtraction.
+
+    Parameters
+    ----------
+    HDU : fits header data unit
+        Image data stored in a fits file
+
+    Returns
+    -------
+    output_im : numpy array
+        the image data array after bias subtraction
+
+    """
     # import needed packages
     # import numpy as np
     # from astropy.io import fits
@@ -47,9 +59,22 @@ def bias_subtract(HDU):  # pass header data unit.  REMEBER, this is pass-by-refe
     return output_im
 
 
-# calculates background using a mask routine from photutils. Requires passing a numpy array of image data
-# returns the background subtracted data, and the mask used to shield the object
+
 def background_subtract(im_data):
+    """calculates background using a mask routine from photutils.
+
+    Parameters
+    ----------
+    im_data : numpy array
+        requiresan image data array
+
+    returns
+    ------
+    output_im: numpy array
+        The background subtracted data.
+    mask: numpy array bool
+        The mask used to shield the object
+    """
     # import numpy as np
     # from astropy.io import fits
 
@@ -73,14 +98,25 @@ def background_subtract(im_data):
     return output_im, mask
 
 
-# a function for parsing the region info pulled from SAOImage DS9 by pyds9's access routines
-# this function returns a list of region objects.
-# Each object has the DS9 canonical definition of the region, the array indices of the region, and the region data
-# for memory/runtime management concerns, the region data feature can be suppressed by setting the optional argument
-# get_data=False. This prevents the function from accessing the data held in DS9, significantly decreasing the resource
-# consumption.
-def parse_regions(get_data=True):
 
+def parse_regions(get_data=True):
+    """a function for parsing the region info pulled from SAOImage DS9 by pyds9's access routines.
+
+    Each object has the DS9 canonical definition of the region, the array indices of the region, and the region data
+    for memory/runtime management concerns, the region data feature can be suppressed by setting the optional argument
+    get_data=False. This prevents the function from accessing the data held in DS9, significantly decreasing the
+    resource consumption.
+
+    Parameters
+    ----------
+    get_data: bool, optional
+        sets whether or not to include the data of the region
+
+    Returns
+    -------
+    regions: list
+        list of region objects that are selected in SAOImage DS9
+    """
     # pulls all regions into a list. 1st entry on the list is the frame name
     import pyds9
     import re
@@ -123,8 +159,20 @@ def parse_regions(get_data=True):
 
     # frame_name = 'current frame'
 
-    # This class is for convenient packaging of the region data
+
     class Region:
+        """
+        This class is for convenient packaging of the region data.
+
+        quick guide
+        -----------
+        self.xmin, self.ymin:
+            gives array location of lower left corner of region
+        self.xmax, self.ymax:
+            gives array location of upper right corner of region
+        self.data:
+            data array selected by region
+        """
         pass
 
     # print meta data

@@ -23,10 +23,10 @@ with fits.open(file_name) as hdu:
 
 
 # arbitrarily chosen object, section manually entered
-ymin = 455
-ymax = 505
-xmin = 1490
-xmax = 1540
+ymin = 1999
+ymax = 2065
+xmin =2046
+xmax = 2112
 Object1_Data = bias_subtracted_im1[ymin:ymax,xmin:xmax]
 
 # Background subtract the object

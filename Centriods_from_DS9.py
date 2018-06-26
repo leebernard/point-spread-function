@@ -24,5 +24,10 @@ hdu = ds9.get_pyfits()
 
 hdu.info()
 
+
+# get the bias subtracted data
+bias_subtraced_data = bias_subtract(hdu[0])
+
+# slice the data into the specified regions
 for region in selected_regions
 
