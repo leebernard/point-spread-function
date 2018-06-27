@@ -99,7 +99,7 @@ def background_subtract(im_data):
 
 
 
-def parse_regions(get_data=True):
+def get_regions(get_data=True):
     """a function for parsing the region info pulled from SAOImage DS9 by pyds9's access routines.
 
     Each object has the DS9 canonical definition of the region, the array indices of the region, and the region data

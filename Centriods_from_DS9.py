@@ -7,7 +7,7 @@ from astropy.io import fits
 import pyds9
 
 # import needed functions from the toolbox
-from ccd_tools import bias_subtract, background_subtract, parse_regions
+from ccd_tools import bias_subtract, background_subtract, get_regions
 
 # show the ds9 target
 print('ds9 target instance')
@@ -17,7 +17,7 @@ print(pyds9.ds9_targets())
 ds9 = pyds9.DS9()
 
 # import a list of region definitions
-selected_regions = parse_regions(get_data=False)
+selected_regions = get_regions(get_data=False)
 
 # import the current fits file loaded in DS9
 hdu = ds9.get_pyfits()
