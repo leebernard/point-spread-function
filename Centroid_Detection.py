@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 # import re
 from astropy.io import fits
 
+
 # import needed functions from the toolbox
 from ccd_tools import bias_subtract, background_subtract
 
@@ -23,10 +24,10 @@ with fits.open(file_name) as hdu:
 
 
 # arbitrarily chosen object, section manually entered
-ymin = 1999
-ymax = 2065
-xmin =2046
-xmax = 2112
+ymin = 455
+ymax = 800
+xmin = 900
+xmax = 1540
 Object1_Data = bias_subtracted_im1[ymin:ymax,xmin:xmax]
 
 # Background subtract the object
@@ -53,20 +54,22 @@ f1, axisarg = plt.subplots(2,1)
 axisarg[0].imshow(Object1_Data, norm=norm, origin='lower', cmap='viridis')
 axisarg[1].imshow(mask, origin='lower', cmap='viridis')
 # plt.show()
+#
+#
 
 
+"""Centroid dectection by curve fitting
 
+this attempt uses a bivariate normal distorbution as a model for the object
 
-# Centroid dectection by curve fitting
-# this attempt uses a bivariate normal distorbution as a model for the object
-
-# define gaussian function, assuming no correlation between x and y
-# indata is a pair of arrays, each array corresponding to the x indice or y indice, in the form (x, y)
-# amplitude is the maximum amplitude of the function, minus background
-# x0, y0 are the center coord. of the function
-# sigma_x, sigma_y are the widths of the function
-# offset is the background
-# the output is flattened, in order to package it for curve_fit
+define gaussian function, assuming no correlation between x and y
+indata is a pair of arrays, each array corresponding to the x indice or y indice, in the form (x, y)
+amplitude is the maximum amplitude of the function, minus background
+x0, y0 are the center coord. of the function
+sigma_x, sigma_y are the widths of the function
+offset is the background
+the output is flattened, in order to package it for curve_fit
+"""
 def Gaussian_2d(indata, amplitude, x0, y0, sigma_x, sigma_y, offset):
     import numpy as np
     x, y = indata
@@ -80,10 +83,10 @@ def Gaussian_2d(indata, amplitude, x0, y0, sigma_x, sigma_y, offset):
 
 # fit data to gaussian
 from scipy.optimize import curve_fit
-from photutils import centroid_2dg
 
-# generate a best guess using photutils
-x_guess, y_guess = centroid_2dg(Object1_Data)
+# generate a best guess
+x_guess = Object1_Data.shape[0]/2
+y_guess = Object1_Data.shape[1]/2
 amp_guess = np.amax(Object1_Data)
 
 # indexes of the apature, remembering that python indexes vert, horz
@@ -124,3 +127,30 @@ plt.show() # show all figures
 print('center: ',x_center, ',', y_center)
 print('width: ', 2*x_width, 'by', 2*y_width)
 
+
+"""Chi squared calculations
+"""
+observed = Object1_Data.ravel()
+
+# define the inputs for the 2d gaussian
+g_input = (x, y)
+amplitude = G_fit[0]
+x0 = G_fit[1]
+y0 = G_fit[2]
+sigma_x = G_fit[3]
+sigma_y = G_fit[4]
+offset = G_fit[5]
+
+expected = Gaussian_2d(g_input, amplitude, x0, y0, sigma_x, sigma_y, offset)
+
+# calculated raw chi squared
+chisq = sum(np.divide((observed - expected)**2, expected))
+
+# degrees of freedom, 5 parameters
+degrees_of_freedom = observed.size - 5
+
+# normalized chi squared
+chisq_norm = chisq/degrees_of_freedom
+
+print('normalized chi squared:')
+print(chisq_norm)
