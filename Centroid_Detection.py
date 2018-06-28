@@ -58,19 +58,31 @@ axisarg[1].imshow(mask, origin='lower', cmap='viridis')
 #
 
 
-"""Centroid dectection by curve fitting
+"""Centroid dectection by curve fitting, using a bivariate normal distribution as a model for the object
 
-this attempt uses a bivariate normal distorbution as a model for the object
-
-define gaussian function, assuming no correlation between x and y
-indata is a pair of arrays, each array corresponding to the x indice or y indice, in the form (x, y)
-amplitude is the maximum amplitude of the function, minus background
-x0, y0 are the center coord. of the function
-sigma_x, sigma_y are the widths of the function
-offset is the background
-the output is flattened, in order to package it for curve_fit
 """
 def Gaussian_2d(indata, amplitude, x0, y0, sigma_x, sigma_y, offset):
+    """Define gaussian function, assuming no correlation between x and y.
+
+    Uses a flattened input, and gives a flattened output
+
+    Parameters
+    ----------
+    indata: array int
+        indata is a pair of arrays, each array corresponding to the x indice or y indice, in the form (x, y)
+    amplitude: float
+        represents the total flux of the object being fitted
+    x0: float
+        horizontal center of the object
+    y0: float
+        vertical center of the object
+    sigma_x: float
+        half width half maximum of the object along the horizontal
+    sigma_y: float
+        half width half maximum of the object along the vertical
+    offset: float
+        represents the background around the object
+    """
     import numpy as np
     x, y = indata
     normalize = 1 / (sigma_x * sigma_y * 2 * np.pi)

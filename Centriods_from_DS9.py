@@ -40,8 +40,7 @@ for region in selected_regions:
     aperture_list.append(current_aperture)
 
 
-"""calculate the centroid for each aperture
-"""
+"""calculate the centroid for each aperture"""
 
 # curve function to be fitted
 def Gaussian_2d(indata, amplitude, x0, y0, sigma_x, sigma_y, offset):
@@ -101,8 +100,7 @@ for aperture in aperture_list:
         # add the calculated center and width bars to the aperture plot as a cross
         # The width of the lines correspond to the width in that direction
         axisarg[0].errorbar(x_center, y_center, xerr=x_width, yerr=y_width, ecolor='red')
-        """Chi squared calculations
-        """
+        """Chi squared calculations"""
         observed = aperture.ravel()
 
         # define the inputs for the 2d gaussian

@@ -66,7 +66,7 @@ def background_subtract(im_data):
     Parameters
     ----------
     im_data : numpy array
-        requiresan image data array
+        requires an image data array
 
     returns
     ------
@@ -172,6 +172,28 @@ def get_regions(get_data=True):
             gives array location of upper right corner of region
         self.data:
             data array selected by region
+
+        Attributes
+        ----------
+        x_coord: int
+            x coordinate of the region center
+        y_coord: int
+            y coordinate of the region center
+        width: int
+            width of the region
+        height: int
+            height of the region
+        xmin: int
+            x coordinate of the lower left corner
+        xmax: int
+            x coordinate of the upper right corner
+        ymin: int
+            y coordinate of the lower left corner
+        ymax: int
+            y coordinate of the upper right corner
+        data: int, optional
+            data array of the defined region, pulled directly from SAOImage DS9. This can be disabled by the get_data
+            flag
         """
         pass
 
