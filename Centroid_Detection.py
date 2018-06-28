@@ -24,11 +24,16 @@ with fits.open(file_name) as hdu:
 
 
 # arbitrarily chosen object, section manually entered
-ymin = 455
-ymax = 800
-xmin = 900
+# ymin = 1545
+# ymax = 1595
+# xmin = 1745
+# xmax = 1795
+
+ymin = 460
+ymax = 500
+xmin = 1490
 xmax = 1540
-Object1_Data = bias_subtracted_im1[ymin:ymax,xmin:xmax]
+Object1_Data = bias_subtracted_im1[ymin:ymax, xmin:xmax]
 
 # Background subtract the object
 Object1_Data, mask = background_subtract(Object1_Data)
@@ -70,41 +75,72 @@ sigma_x, sigma_y are the widths of the function
 offset is the background
 the output is flattened, in order to package it for curve_fit
 """
+"""
 def Gaussian_2d(indata, amplitude, x0, y0, sigma_x, sigma_y, offset):
     import numpy as np
     x, y = indata
     normalize = 1 / (sigma_x * sigma_y * 2 * np.pi)
 
-    gaussian_fun = offset + amplitude * normalize * np.exp(
-        -(x - x0) ** 2 / (2 * sigma_x ** 2) - (y - y0) ** 2 / (2 * sigma_y ** 2))
+    gaussian_fun = offset + amplitude*normalize*np.exp(-(x-x0)**2/(2*sigma_x**2) - (y-y0)**2/(2*sigma_y**2))
 
     return gaussian_fun.ravel()
+"""
 
+
+def Moffat(indata, flux, x0, y0, alpha, beta, offset):
+    """define sum of two Moffat function for curve fitting
+    """
+    x, y = indata
+    normalize = (beta-1)/(np.pi*alpha**2)
+
+    moffat_fun = offset + flux*normalize*(1 + ((x-x0)**2 + (y-y0)**2)/(alpha**2))**(-beta)
+
+    return moffat_fun.ravel()
+
+
+def Moffat_sum(indata, flux1, flux2, alpha1, alpha2, beta1, beta2, x0, y0, offset):
+    x, y = indata
+    normalize1 = (beta1-1)/(np.pi*alpha1**2)
+    normalize2 = (beta2-1)/(np.pi*alpha2**2)
+           #  flux *normalize *(1 + ((x - x0)**2 + (y - y0)**2) / (alpha **2))**(-beta)
+    moffat1 = flux1*normalize1*(1 + ((x - x0)**2 + (y - y0)**2) / (alpha1**2))**(-beta1)
+    moffat2 = flux2*normalize2*(1 + ((x - x0)**2 + (y - y0)**2) / (alpha2**2))**(-beta2)
+    moffat_fun = offset + moffat1 + moffat2
+
+    return moffat_fun.ravel()
 
 # fit data to gaussian
+# instead fit data to moffat
 from scipy.optimize import curve_fit
 
-# generate a best guess
-x_guess = Object1_Data.shape[0]/2
-y_guess = Object1_Data.shape[1]/2
-amp_guess = np.amax(Object1_Data)
-
-# indexes of the apature, remembering that python indexes vert, horz
+# indexes of the aperture, remembering that python indexes vert, horz
 y = np.arange(Object1_Data.shape[0])
 x = np.arange(Object1_Data.shape[1])
 x, y = np.meshgrid(x, y)
 
-# curve fit
-G_fit, G_cov = curve_fit(Gaussian_2d, (x, y), Object1_Data.ravel(), p0=[amp_guess, x_guess, y_guess, 1, 1, 1])
-print('Resultant parameters')
-print(G_fit)
+# generate a best guess
+x_guess = Object1_Data.shape[0]/2
+y_guess = Object1_Data.shape[1]/2
+amp1_guess = np.amax(Object1_Data)
+amp2_guess = np.mean(Object1_Data)
+beta1_guess = 100
+beta2_guess = 2
+alpha1_guess = 2
+alpha2_guess = 20
 
-error = np.sqrt(np.diag(G_cov))
+
+# curve fit
+# m_fit, m_cov = curve_fit(Moffat, (x,y), Object1_Data.ravel(), p0=[amp1_guess, x_guess, y_guess, 2, 2, 2])
+m_fit, m_cov = curve_fit(Moffat_sum, (x, y), Object1_Data.ravel(), p0=[amp1_guess, amp2_guess, alpha1_guess, alpha2_guess, beta1_guess, beta2_guess, x_guess, y_guess, 2])
+print('Resultant parameters')
+print(m_fit)
+
+error = np.sqrt(np.diag(m_cov))
 print('Error on parameters')
 print(error)
 
-print('Covariance matrix, if that is interesting')
-print(G_cov)
+# print('Covariance matrix, if that is interesting')
+# print(m_cov)
 
 print('peak count')
 print(np.amax(Object1_Data))
@@ -112,45 +148,60 @@ print(np.amax(Object1_Data))
 # display the result as a cross. The width of the lines correspond to the width in that direction
 norm = ImageNormalize(stretch=SqrtStretch())
 
-x_center = G_fit[1]
-y_center = G_fit[2]
-x_width = G_fit[3]
-y_width = G_fit[4]
-
+"""this is the center for the single moffat
+x_center = m_fit[1]
+y_center = m_fit[2]
+x_width = m_fit[3] # alpha is the width
+y_width = m_fit[3]
+"""
+x_center = m_fit[6]
+y_center = m_fit[7]
+x_width = m_fit[3] # width of narrow moffet
+y_width = m_fit[2] # width of wide moffet
 plt.figure()
 plt.imshow(Object1_Data, norm=norm, origin='lower', cmap='viridis')
 plt.errorbar(x_center, y_center, xerr=x_width, yerr=y_width, ecolor='red')
 
 
-plt.show() # show all figures
-
-print('center: ',x_center, ',', y_center)
-print('width: ', 2*x_width, 'by', 2*y_width)
+# print('center: ',x_center, ',', y_center)
+# print('width: ', 2*x_width, 'by', 2*y_width)
 
 
 """Chi squared calculations
 """
 observed = Object1_Data.ravel()
 
-# define the inputs for the 2d gaussian
-g_input = (x, y)
-amplitude = G_fit[0]
-x0 = G_fit[1]
-y0 = G_fit[2]
-sigma_x = G_fit[3]
-sigma_y = G_fit[4]
-offset = G_fit[5]
+# define the inputs for the Moffat
+m_input = (x, y)
+flux1 = m_fit[0]
+flux2 = m_fit[1]
+alpha1 = m_fit[2]
+alpha2 = m_fit[3]
+beta1 = m_fit[4]
+beta2 = m_fit[5]
+x0 = m_fit[6]
+y0 = m_fit[7]
+offset = m_fit[8]
+# expected = Moffat(m_input, flux, x0, y0, alpha, beta, offset) # old, for single Moffat
 
-expected = Gaussian_2d(g_input, amplitude, x0, y0, sigma_x, sigma_y, offset)
+expected = Moffat_sum(m_input, flux1, alpha1, beta1, flux2, alpha2, beta2, x0, y0, offset)
 
 # calculated raw chi squared
 chisq = sum(np.divide((observed - expected)**2, expected))
 
 # degrees of freedom, 5 parameters
-degrees_of_freedom = observed.size - 5
+degrees_of_freedom = observed.size - 9
 
 # normalized chi squared
 chisq_norm = chisq/degrees_of_freedom
 
 print('normalized chi squared:')
 print(chisq_norm)
+
+# histogram
+# plt.figure()
+# histogram = plt.hist(Object1_Data.flatten(),bins=2000, range=[-500, 30000])
+#
+# plt.figure()
+# plt.hist(Object1_Data.flatten(),bins=2000, range=[-500, 30000])
+plt.show() # show all figures
