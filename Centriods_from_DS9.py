@@ -84,9 +84,10 @@ for aperture in aperture_list:
 
     # plot the aperture and mask used to background subtract
     norm = ImageNormalize(stretch=SqrtStretch())
-    f1, axisarg = plt.subplots(2, 1)
+    f1, axisarg = plt.subplots(3, 1)
     axisarg[0].imshow(aperture, norm=norm, origin='lower', cmap='viridis')
     axisarg[1].imshow(mask, origin='lower', cmap='viridis')
+    axisarg[2].hist(aperture.flatten(),bins=500, range=[-500, 5000])
 
     # generate a best guess
     x_guess = aperture.shape[0] / 2
@@ -103,15 +104,16 @@ for aperture in aperture_list:
     try:
         g_fit, g_cov = curve_fit(Gaussian_2d, (x, y), aperture.ravel(), p0=[amp_guess, x_guess, y_guess, 1, 1, 1])
 
+
+    except RuntimeError:
+        print('Unable to find fit.')
+    else:
         print('Resultant parameters')
         print(g_fit)
 
         error = np.sqrt(np.diag(g_cov))
         print('Error on parameters')
         print(error)
-
-
-
 
         x_center = g_fit[1]
         y_center = g_fit[2]
@@ -146,10 +148,6 @@ for aperture in aperture_list:
 
         print('Normalized chi squared:')
         print(chisq_norm)
-
-
-    except RuntimeError:
-        print('Unable to find fit.')
 
 plt.show()
 

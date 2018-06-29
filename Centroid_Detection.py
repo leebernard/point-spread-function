@@ -29,14 +29,14 @@ with fits.open(file_name) as hdu:
 # xmin = 1745
 # xmax = 1795
 
-ymin = 460
-ymax = 500
+ymin = 455
+ymax = 505
 xmin = 1490
 xmax = 1540
 object1_data = bias_subtracted_im1[ymin:ymax, xmin:xmax]
 
 # Background subtract the object
-object1_data_pass, mask = background_subtract(object1_data)
+object1_data, mask = background_subtract(object1_data)
 
 # centroid techniques: need to learn the difference3s
 # print('Centroids:')

@@ -34,7 +34,7 @@ xmax = 1540
 object1_data = bias_subtracted_im1[ymin:ymax, xmin:xmax]
 
 # Background subtract the object
-object1_data_pass, mask = background_subtract(object1_data)
+object1_data, mask = background_subtract(object1_data)
 
 # centroid techniques: need to learn the difference3s
 # print('Centroids:')
@@ -136,7 +136,7 @@ norm = ImageNormalize(stretch=SqrtStretch())
 # this is the center for the single moffat
 x_center = m_fit[1]
 y_center = m_fit[2]
-x_width = m_fit[3] # alpha is the width
+x_width = m_fit[3]  # alpha is the width
 y_width = m_fit[3]
 
 plt.figure()
@@ -171,8 +171,8 @@ print('normalized chi squared:')
 print(chisq_norm)
 
 # histogram
-# plt.figure()
-# histogram = plt.hist(object1_data.flatten(),bins=2000, range=[-500, 30000])
+plt.figure()
+histogram = plt.hist(object1_data.flatten(),bins=2000, range=[-500, 30000])
 #
 # plt.figure()
 # plt.hist(object1_data.flatten(),bins=2000, range=[-500, 30000])
