@@ -1,5 +1,69 @@
 
 
+def Gaussian_2d(indata, amplitude, x0, y0, sigma_x, sigma_y, offset):
+    """Define gaussian function, assuming no correlation between x and y.
+
+    Uses a flattened input, and gives a flattened output
+
+    Parameters
+    ----------
+    indata: array int
+        indata is a pair of arrays, each array corresponding to the x indice or y indice, in the form (x, y)
+    amplitude: float
+        represents the total flux of the object being fitted
+    x0: float
+        horizontal center of the object
+    y0: float
+        vertical center of the object
+    sigma_x: float
+        half width half maximum of the object along the horizontal
+    sigma_y: float
+        half width half maximum of the object along the vertical
+    offset: float
+        represents the background around the object
+    """
+    import numpy as np
+    x, y = indata
+    normalize = 1 / (sigma_x * sigma_y * 2 * np.pi)
+
+    gaussian_fun = offset + amplitude * normalize * np.exp(
+        -(x - x0) ** 2 / (2 * sigma_x ** 2) - (y - y0) ** 2 / (2 * sigma_y ** 2))
+
+    return gaussian_fun.ravel()
+
+
+def fake_Gaussian_2d(indata, amplitude, x0, y0, sigma_x, sigma_y, offset):
+    """same as Guassian_2D, but does not flatten the result.
+
+    This function is used for prducing a 2d array of the result from the fit
+
+    Parameters
+    ----------
+    indata: array int
+        indata is a pair of arrays, each array corresponding to the x indice or y indice, in the form (x, y)
+    amplitude: float
+        represents the total flux of the object being fitted
+    x0: float
+        horizontal center of the object
+    y0: float
+        vertical center of the object
+    sigma_x: float
+        half width half maximum of the object along the horizontal
+    sigma_y: float
+        half width half maximum of the object along the vertical
+    offset: float
+        represents the background around the object
+    """
+    import numpy as np
+    x, y = indata
+    normalize = 1 / (sigma_x * sigma_y * 2 * np.pi)
+
+    gaussian_fun = offset + amplitude * normalize * np.exp(
+        -(x - x0) ** 2 / (2 * sigma_x ** 2) - (y - y0) ** 2 / (2 * sigma_y ** 2))
+
+    return gaussian_fun
+
+
 # needed packages
 import numpy as np
 # import matplotlib
@@ -42,37 +106,7 @@ for region in selected_regions:
 
 """calculate the centroid for each aperture"""
 
-# curve function to be fitted
-def Gaussian_2d(indata, amplitude, x0, y0, sigma_x, sigma_y, offset):
-    """Define gaussian function, assuming no correlation between x and y.
 
-    Uses a flattened input, and gives a flattened output
-
-    Parameters
-    ----------
-    indata: array int
-        indata is a pair of arrays, each array corresponding to the x indice or y indice, in the form (x, y)
-    amplitude: float
-        represents the total flux of the object being fitted
-    x0: float
-        horizontal center of the object
-    y0: float
-        vertical center of the object
-    sigma_x: float
-        half width half maximum of the object along the horizontal
-    sigma_y: float
-        half width half maximum of the object along the vertical
-    offset: float
-        represents the background around the object
-    """
-    import numpy as np
-    x, y = indata
-    normalize = 1 / (sigma_x * sigma_y * 2 * np.pi)
-
-    gaussian_fun = offset + amplitude * normalize * np.exp(
-        -(x - x0) ** 2 / (2 * sigma_x ** 2) - (y - y0) ** 2 / (2 * sigma_y ** 2))
-
-    return gaussian_fun.ravel()
 
 # generate each curve fit
 from scipy.optimize import curve_fit
@@ -84,10 +118,10 @@ for aperture in aperture_list:
 
     # plot the aperture and mask used to background subtract
     norm = ImageNormalize(stretch=SqrtStretch())
-    f1, axisarg = plt.subplots(3, 1)
-    axisarg[0].imshow(aperture, norm=norm, origin='lower', cmap='viridis')
-    axisarg[1].imshow(mask, origin='lower', cmap='viridis')
-    axisarg[2].hist(aperture.flatten(),bins=500, range=[-500, 5000])
+    f1, axisarg = plt.subplots(2, 2)
+    axisarg[0][0].imshow(aperture, norm=norm, origin='lower', cmap='viridis')
+    axisarg[1][0].imshow(mask, origin='lower', cmap='viridis')
+    axisarg[0][1].hist(aperture.flatten(),bins=500, range=[-500, 5000])
 
     # generate a best guess
     x_guess = aperture.shape[0] / 2
@@ -104,7 +138,6 @@ for aperture in aperture_list:
     try:
         g_fit, g_cov = curve_fit(Gaussian_2d, (x, y), aperture.ravel(), p0=[amp_guess, x_guess, y_guess, 1, 1, 1])
 
-
     except RuntimeError:
         print('Unable to find fit.')
     else:
@@ -120,11 +153,7 @@ for aperture in aperture_list:
         x_width = g_fit[3]
         y_width = g_fit[4]
 
-        # add the calculated center and width bars to the aperture plot as a cross
-        # The width of the lines correspond to the width in that direction
-        axisarg[0].errorbar(x_center, y_center, xerr=x_width, yerr=y_width, ecolor='red')
-        """Chi squared calculations"""
-        observed = aperture.ravel()
+        """calculate the resulting plot from the fit"""
 
         # define the inputs for the 2d gaussian
         g_input = (x, y)
@@ -134,6 +163,21 @@ for aperture in aperture_list:
         sigma_x = g_fit[3]
         sigma_y = g_fit[4]
         offset = g_fit[5]
+
+        result = fake_Gaussian_2d(g_input, amplitude, x0, y0, sigma_x, sigma_y, offset)
+
+        # calculate the difference between the obersved and the result fro mthe fit
+        result_difference = aperture - result
+
+        #plot it!
+        axisarg[1][1].imshow(result, norm=norm, origin='lower', cmap='viridis')
+        # add the calculated center and width bars to the aperture plot as a cross
+        # The width of the lines correspond to the width in that direction
+        axisarg[0][0].errorbar(x_center, y_center, xerr=x_width, yerr=y_width, ecolor='red')
+
+
+        """Chi squared calculations"""
+        observed = aperture.ravel()
 
         expected = Gaussian_2d(g_input, amplitude, x0, y0, sigma_x, sigma_y, offset)
 
