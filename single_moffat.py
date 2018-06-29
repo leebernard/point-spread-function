@@ -1,3 +1,15 @@
+
+def Moffat(indata, flux, x0, y0, alpha, beta, offset):
+    """Model of PSF using a single Moffat distribution
+    """
+    x, y = indata
+    normalize = (beta - 1) / (np.pi * alpha ** 2)
+
+    moffat_fun = offset + flux*normalize*(1 + ((x - x0)**2 + (y - y0)**2) / (alpha**2))**(-beta)
+
+    return moffat_fun
+
+
 # needed packages
 import numpy as np
 # import matplotlib
@@ -58,8 +70,10 @@ def moffat_fit(indata):
     This fit is rather complicated, so it has been wrapped into a function for convience
     """
 
-    def Moffat(indata, flux, x0, y0, alpha, beta, offset):
-        """define sum of two Moffat function for curve fitting
+    def flat_Moffat(indata, flux, x0, y0, alpha, beta, offset):
+        """Model of PSF using a single Moffat distribution
+
+        This function flattens the output, for curve fitting
         """
         x, y = indata
         normalize = (beta-1)/(np.pi*alpha**2)
@@ -88,7 +102,7 @@ def moffat_fit(indata):
     guess = [flux_guess, x_guess, y_guess, alpha_guess, beta_guess, offset_guess]
 
     # generate parameters for fit
-    m_fit, m_cov = curve_fit(Moffat, (x, y), indata.ravel(), p0=guess)
+    m_fit, m_cov = curve_fit(flat_Moffat, (x, y), indata.ravel(), p0=guess)
 
 
     """Chi squared calculations
@@ -103,7 +117,7 @@ def moffat_fit(indata):
     beta = m_fit[4]
     offset = m_fit[5]
 
-    expected = Moffat(m_input, flux, x0, y0, alpha, beta, offset)
+    expected = flat_Moffat(m_input, flux, x0, y0, alpha, beta, offset)
 
     # calculated raw chi squared
     chisq = sum(np.divide((observed - expected) ** 2, expected))
@@ -144,10 +158,30 @@ y_center = m_fit[2]
 x_width = m_fit[3]  # alpha is the width
 y_width = m_fit[3]
 
+# show the aperture, with the found center displayed
 plt.figure()
 plt.imshow(object1_data, norm=norm, origin='lower', cmap='viridis')
 plt.errorbar(x_center, y_center, xerr=x_width, yerr=y_width, ecolor='red')
 
+# Calculate the resultant 2d spread
+y = np.arange(object1_data.shape[0])
+x = np.arange(object1_data.shape[1])
+x, y = np.meshgrid(x, y)
+m_input = (x, y)
+flux = m_fit[0]
+x0 = m_fit[1]
+y0 = m_fit[2]
+alpha = m_fit[3]
+beta = m_fit[4]
+offset = m_fit[5]
+result = Moffat(m_input, flux, x0, y0, alpha, beta, offset)
+
+# difference between the result and the observed data
+result_difference = object1_data - result
+# plot the result, compared to the original object
+f2, axisarg = plt.subplots(2, 1)
+axisarg[0].imshow(object1_data, norm=norm, origin='lower', cmap='viridis')
+axisarg[1].imshow(result_difference, norm=norm, origin='lower', cmap='viridis')
 
 
 
