@@ -179,13 +179,13 @@ def get_regions(get_data=True):
 
         Attributes
         ----------
-        x_coord: int
+        x_coord: float
             x coordinate of the region center
-        y_coord: int
+        y_coord: float
             y coordinate of the region center
-        width: int
+        width: float
             width of the region
-        height: int
+        height: float
             height of the region
         xmin: int
             x coordinate of the lower left corner
@@ -208,7 +208,7 @@ def get_regions(get_data=True):
 
     # parse the meta data string
     # pattern is all sequences of digits that are terminated by a period
-    pattern = re.compile('\d+(?=\.)') #(?<!\.)
+    pattern = re.compile('\d+\.?\d*')
 
     # The list for holding the region data. This is returned
     regions = []
@@ -229,10 +229,10 @@ def get_regions(get_data=True):
             current_region.system = region_system
 
             # region definition: orgin is lower left, given as x and y coord, with a width and a height
-            x_coord = int(region_def[0])
-            y_coord = int(region_def[1])
-            width = int(region_def[2])
-            height = int(region_def[3])
+            x_coord = float(region_def[0])
+            y_coord = float(region_def[1])
+            width = float(region_def[2])
+            height = float(region_def[3])
 
             # region slicing data
             xmin = int(x_coord - width/2)

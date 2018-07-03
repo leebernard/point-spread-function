@@ -89,7 +89,7 @@ ds9 = pyds9.DS9()
 selected_regions = get_regions(get_data=False)
 
 # import the current fits file loaded in DS9
-hdu = ds9.get_pyfits()
+hdu = ds9.get_fits()
 
 hdu.info()
 
