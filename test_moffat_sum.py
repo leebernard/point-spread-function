@@ -100,7 +100,7 @@ def moffat_fit(indata):
     expected = flat_Moffat_sum(m_input, flux1, flux2, alpha1, alpha2, beta1, beta2, x0, y0, background)
 
     # calculated raw chi squared
-    chisq = sum(np.divide((observed - expected) ** 2, expected))
+    chisq = sum(np.divide((expected - observed) ** 2, (observed)))
 
     # degrees of freedom, 5 parameters
     degrees_of_freedom = observed.size - 6
@@ -150,8 +150,8 @@ print('background: ' + str(m_fit[8]))
 
 # print the errors
 error = np.sqrt(np.diag(m_cov))
-print('Error on parameters')
-print(error)
+print('Relative Error on parameters')
+print(str(error/m_fit))
 
 
 # generate a plot of fit result

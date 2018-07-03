@@ -1,14 +1,16 @@
 
 
 
-def bias_subtract(HDU):  # pass header data unit.  REMEBER, this is pass-by-reference
+def bias_subtract(HDU, bias_sec=none):  # pass header data unit.  REMEBER, this is pass-by-reference
     """Takes a header data unit, find the bias data from BIASSEC, and performs bias calculations and subtraction.
 
     Parameters
     ----------
     HDU : fits header data unit
         Image data stored in a fits file
-
+    bias_sec : tuple int, optional
+        defines the area of the frame to be used to calculate the bias. If not specified, determines the bias from the
+        header definition
     Returns
     -------
     output_im : numpy array
@@ -24,26 +26,28 @@ def bias_subtract(HDU):  # pass header data unit.  REMEBER, this is pass-by-refe
     # Store the data from the HDU argument
     im_data = HDU.data
 
-    # pull the bias section information
-    Bias_Sec = HDU.header['BIASSEC']
-    print('Bias Section is ' + Bias_Sec)
-    # print(type(Bias_Sec))
-    # slice the string, for converting to int
-    pattern = re.compile('\d+')  # pattern for all decimal digits
-    print(pattern.findall(Bias_Sec))
+    # check if parameters give the bias section, if not, automatically get it
+    if not bias_sec:
+        # pull the bias section information from the header readout.
+        Bias_Sec = HDU.header['BIASSEC']
+        print('Bias Section is ' + Bias_Sec)
+        # print(type(Bias_Sec))
+        # slice the string, for converting to int
+        pattern = re.compile('\d+')  # pattern for all decimal digits
+        print(pattern.findall(Bias_Sec))
 
-    # hold the result in an object
-    match = pattern.findall(Bias_Sec)
+        # hold the result in an object
+        bias_sec = pattern.findall(Bias_Sec)
 
-    # Bias section data from the header readout.
+    # Bias section data
     # image is not indexed the same as python.
     # Image indexes (x,y), from lower left
     # python indexes (y,x)
 
-    xmin = int(match[0])
-    xmax = int(match[1])
-    ymin = int(match[2])
-    ymax = int(match[3])
+    xmin = int(bias_sec[0])
+    xmax = int(bias_sec[1])
+    ymin = int(bias_sec[2])
+    ymax = int(bias_sec[3])
 
     bias_data = im_data[ymin:ymax, xmin:xmax]
 

@@ -92,27 +92,23 @@ def moffat_fit(indata):
 
 
 # generate the fake object
-y = np.arange(50)
-x = np.arange(50)
+y = np.arange(25)
+x = np.arange(25)
 x, y = np.meshgrid(x, y)
 m_input = (x, y)
 flux = 1000000  # 1 million
-x0 = 26
-y0 = 23
+x0 = 13
+y0 = 11
 alpha = 6
 beta = 9
 offset = 0
 fake_object = Moffat(m_input, flux, x0, y0, alpha, beta, offset)
 
 # spike the object with some noise
-noise = np.random.normal(0,25,fake_object.shape)
+noise = np.random.normal(0,10,fake_object.shape)
 fake_object = fake_object + noise
 
-# show the generated object
-norm = ImageNormalize(stretch=SqrtStretch())
 
-plt.figure()
-plt.imshow(fake_object, norm=norm, origin='lower', cmap='viridis')
 
 # fit the fake data
 m_fit, m_cov = moffat_fit(fake_object)
@@ -125,8 +121,21 @@ print('beta: ' + str(m_fit[4]))
 print('background: ' + str(m_fit[5]))
 
 error = np.sqrt(np.diag(m_cov))
-print('Error on parameters')
-print(error)
+print('Relative Error on parameters')
+print(error/m_fit)
+
+# generate the data from the result fit
+result = Moffat(m_input, m_fit[0], m_fit[1], m_fit[2], m_fit[3], m_fit[4], m_fit[5])
+
+# difference from the fake object
+result_difference = fake_object-result
+
+# show the generated object and the difference from the fit
+norm = ImageNormalize(stretch=SqrtStretch())
+
+f1, axisarg = plt.subplots(2, 1)
+axisarg[0].imshow(fake_object, norm=norm, origin='lower', cmap='viridis')
+axisarg[1].imshow(result_difference, norm=norm, origin='lower', cmap='viridis')
 
 
 plt.show()
