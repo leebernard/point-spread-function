@@ -1,7 +1,7 @@
 
 
 
-def bias_subtract(HDU, bias_sec=none):  # pass header data unit.  REMEBER, this is pass-by-reference
+def bias_subtract(HDU, bias_sec=None):  # pass header data unit.  REMEBER, this is pass-by-reference
     """Takes a header data unit, find the bias data from BIASSEC, and performs bias calculations and subtraction.
 
     Parameters
