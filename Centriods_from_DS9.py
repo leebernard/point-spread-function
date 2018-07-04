@@ -96,7 +96,7 @@ hdu.info()
 # get the bias subtracted data
 bias_subtracted_data = bias_subtract(hdu[0])
 
-# use the regions to produce apertures of the data
+# use the regions to produce apertures of thedata
 # also background subtract the data
 aperture_list = []  # list for holding aperture data
 for region in selected_regions:
@@ -114,7 +114,7 @@ for aperture in aperture_list:
 
     print('---------------------')
     # background subtract the aperture
-    aperture, mask = background_subtract(aperture)
+    aperture, mask, background_dev = background_subtract(aperture)
 
     # plot the aperture and mask used to background subtract
     norm = ImageNormalize(stretch=SqrtStretch())
@@ -182,7 +182,7 @@ for aperture in aperture_list:
         expected = Gaussian_2d(g_input, amplitude, x0, y0, sigma_x, sigma_y, offset)
 
         # calculated raw chi squared
-        chisq = sum(np.divide((observed - expected) ** 2, expected))
+        chisq = sum(np.divide((observed - expected) ** 2, expected + background_dev**2))
 
         # degrees of freedom, 5 parameters
         degrees_of_freedom = observed.size - 5

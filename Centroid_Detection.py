@@ -36,7 +36,7 @@ xmax = 1540
 object1_data = bias_subtracted_im1[ymin:ymax, xmin:xmax]
 
 # Background subtract the object
-object1_data, mask = background_subtract(object1_data)
+object1_data, mask, background_dev = background_subtract(object1_data)
 
 # centroid techniques: need to learn the difference3s
 # print('Centroids:')
@@ -218,7 +218,7 @@ offset = m_fit[8]
 expected = Moffat_sum(m_input, flux1, alpha1, beta1, flux2, alpha2, beta2, x0, y0, offset)
 
 # calculated raw chi squared
-chisq = sum(np.divide((observed - expected)**2, expected))
+chisq = sum(np.divide((observed - expected)**2, expected + background_dev**2))
 
 # degrees of freedom, 5 parameters
 degrees_of_freedom = observed.size - 9

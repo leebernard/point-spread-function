@@ -99,7 +99,7 @@ def background_subtract(im_data):
 
     output_im = im_data - mean
 
-    return output_im, mask
+    return output_im, mask, std
 
 
 

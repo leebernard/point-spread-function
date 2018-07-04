@@ -46,7 +46,7 @@ xmax = 1540
 object1_data = bias_subtracted_im1[ymin:ymax, xmin:xmax]
 
 # Background subtract the object
-object1_data, mask = background_subtract(object1_data)
+object1_data, mask, background_dev = background_subtract(object1_data)
 
 # show an image of the aperture
 from astropy.visualization import SqrtStretch
@@ -120,7 +120,7 @@ def moffat_fit(indata):
     expected = flat_Moffat(m_input, flux, x0, y0, alpha, beta, offset)
 
     # calculated raw chi squared
-    chisq = sum(np.divide((observed - expected) ** 2, expected))
+    chisq = sum(np.divide((observed - expected) ** 2, expected + background_dev**2))
 
     # degrees of freedom, 5 parameters
     degrees_of_freedom = observed.size - 6
