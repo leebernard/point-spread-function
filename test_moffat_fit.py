@@ -36,7 +36,7 @@ def flat_Moffat(indata, flux, x0, y0, alpha, beta, offset):
 
 
 
-def elliptical_Moffat(indata, flux, x0, y0, alpha, beta, a, b, offset):
+def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, offset):
     """Model of PSF using a single Moffat distribution, with elliptical parameters.
 
     This version does not account for axial alignment.
@@ -44,14 +44,14 @@ def elliptical_Moffat(indata, flux, x0, y0, alpha, beta, a, b, offset):
     This function flattens the output, for curve fitting
     """
     x, y = indata
-    normalize = (beta - 1) / ((a*b) * np.pi * alpha**2)
+    normalize = 1  #(beta - 1) / ((a*b) * np.pi)
 
-    moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2) / (alpha**2))**(-beta)
+    moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2))**(-beta)
 
     return moffat_fun
 
 
-def flat_elliptical_Moffat(indata, flux, x0, y0, alpha, beta, a, b, offset):
+def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, offset):
     """Model of PSF using a single Moffat distribution, with elliptical parameters.
 
     This version does not account for axial alignment
@@ -60,9 +60,9 @@ def flat_elliptical_Moffat(indata, flux, x0, y0, alpha, beta, a, b, offset):
 
     """
     x, y = indata
-    normalize = (beta - 1) / ((a*b) * np.pi * alpha ** 2)
+    normalize = 1  #(beta - 1) / ((a*b) * np.pi)
 
-    moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2) / (alpha**2))**(-beta)
+    moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2))**(-beta)
 
     return moffat_fun.ravel()
 
@@ -86,28 +86,26 @@ def moffat_fit(indata):
     flux_guess = np.amax(indata)
     y_guess = indata.shape[0]/2
     x_guess = indata.shape[1]/2
-    alpha_guess = 4
     beta_guess = 2
-    a_guess = 1
-    b_guess = 1
+    a_guess = 2
+    b_guess = 2
     offset_guess = 0
 
-    guess = [flux_guess, x_guess, y_guess, alpha_guess, beta_guess, a_guess, b_guess, offset_guess]
+    guess = [flux_guess, x_guess, y_guess, beta_guess, a_guess, b_guess, offset_guess]
 
     # create bounds for the fit, in an attempt to keep it from blowing up
     """
     flux_bound = [0, np.inf]
     x_bound = [0, object1_data.shape[1]]
     y_bound = [0, object1_data.shape[0]]
-    alpha_bound = [0.1, np.inf]
     beta_bound = [1, 20]]
-    a_bound = [0, 1]
-    b_bound = [0, 1]
+    a_bound = [0.1, np.inf]
+    b_bound = [0.1, np.inf]
     offset_bound = [-np.inf, np.inf]
     """
     # format the bounds
-    lower_bounds = [0, 0, 0, 0.1, 1, 0, 0, -np.inf]
-    upper_bounds = [np.inf, indata.shape[1], indata.shape[0], np.inf, 20, 1, 1,
+    lower_bounds = [0, 0, 0, 1, 0.1, 0.1, -np.inf]
+    upper_bounds = [np.inf, indata.shape[1], indata.shape[0], 20, np.inf, np.inf,
                     np.inf]
     bounds = (lower_bounds, upper_bounds)  # bounds set as pair of array-like tuples
 
@@ -123,13 +121,12 @@ def moffat_fit(indata):
     flux = fit_result[0]
     x0 = fit_result[1]
     y0 = fit_result[2]
-    alpha = fit_result[3]
-    beta = fit_result[4]
-    a = fit_result[5]
-    b = fit_result[6]
-    offset = fit_result[7]
+    beta = fit_result[3]
+    a = fit_result[4]
+    b = fit_result[5]
+    offset = fit_result[6]
 
-    expected = flat_elliptical_Moffat(m_input, flux, x0, y0, alpha, beta, a, b, offset)
+    expected = flat_elliptical_Moffat(m_input, flux, x0, y0, beta, a, b, offset)
     # expected = flat_Moffat(m_input, flux, x0, y0, alpha, beta, offset)
     # calculated raw chi squared
     chisq = sum(np.divide((observed - expected) ** 2, expected))
@@ -153,16 +150,15 @@ m_input = (x, y)
 flux = 1000000  # 1 million
 x0 = 26
 y0 = 22
-alpha = 4
 beta = 5
-a = .5
-b = .9
+a = 2
+b = 3.6
 offset = 0
-fake_object = elliptical_Moffat(m_input, flux, x0, y0, alpha, beta, a, b, offset)
+fake_object = elliptical_Moffat(m_input, flux, x0, y0, beta, a, b, offset)
 
 # spike the object with some noise
 noise = np.random.normal(0,10,fake_object.shape)
-fake_object = fake_object + noise
+# fake_object = fake_object + noise
 
 
 
@@ -172,18 +168,17 @@ m_fit, m_cov = moffat_fit(fake_object)
 print('Resultant parameters')
 print('Flux: ' + str(m_fit[0]))
 print('Center (x, y): '+str(m_fit[1]) + ', ' + str(m_fit[2]))
-print('alpha: '+str(m_fit[3]))
-print('beta: ' + str(m_fit[4]))
-print('x-axis eccentricity: ' + str(m_fit[5]))
-print('y-axis eccentricity: ' + str(m_fit[6]))
-print('background: ' + str(m_fit[7]))
+print('beta: ' + str(m_fit[3]))
+print('x-axis eccentricity: ' + str(m_fit[4]))
+print('y-axis eccentricity: ' + str(m_fit[5]))
+print('background: ' + str(m_fit[6]))
 
 error = np.sqrt(np.diag(m_cov))
 print('Relative Error on parameters')
 print(error/m_fit)
 
 # generate the data from the result fit
-result = elliptical_Moffat(m_input, m_fit[0], m_fit[1], m_fit[2], m_fit[3], m_fit[4], m_fit[5], m_fit[6], m_fit[7])
+result = elliptical_Moffat(m_input, m_fit[0], m_fit[1], m_fit[2], m_fit[3], m_fit[4], m_fit[5], m_fit[6])
 
 # difference from the fake object
 result_difference = fake_object-result
