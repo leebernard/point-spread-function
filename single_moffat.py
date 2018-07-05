@@ -1,13 +1,57 @@
+#
+# def Moffat(indata, flux, x0, y0, alpha, beta, offset):
+#     """Model of PSF using a single Moffat distribution
+#     """
+#     x, y = indata
+#     normalize = (beta - 1) / (np.pi * alpha ** 2)
+#
+#     moffat_fun = offset + flux*normalize*(1 + ((x - x0)**2 + (y - y0)**2) / (alpha**2))**(-beta)
+#
+#     return moffat_fun
 
-def Moffat(indata, flux, x0, y0, alpha, beta, offset):
-    """Model of PSF using a single Moffat distribution
+#
+# def flat_Moffat(indata, flux, x0, y0, alpha, beta, offset):
+#     """Model of PSF using a single Moffat distribution
+#
+#     This function flattens the output, for curve fitting
+#     """
+#     x, y = indata
+#     normalize = (beta-1)/(np.pi*alpha**2)
+#
+#     moffat_fun = offset + flux*normalize*(1 + ((x-x0)**2 + (y-y0)**2)/(alpha**2))**(-beta)
+#
+#     return moffat_fun.ravel()
+
+
+def elliptical_Moffat(indata, flux, x0, y0, alpha, beta, a, b, offset):
+    """Model of PSF using a single Moffat distribution, with elliptical parameters.
+
+    This version does not account for axial alignment.
+
+    This function flattens the output, for curve fitting
     """
     x, y = indata
-    normalize = (beta - 1) / (np.pi * alpha ** 2)
+    normalize = (beta - 1) / ((a*b) * np.pi * alpha ** 2)
 
-    moffat_fun = offset + flux*normalize*(1 + ((x - x0)**2 + (y - y0)**2) / (alpha**2))**(-beta)
+    moffat_fun = offset + flux * normalize * (1 + ( ((x - x0)/a)**2 + ((y - y0)/b) ** 2) / (alpha**2)) ** (-beta)
 
     return moffat_fun
+
+
+def flat_elliptical_Moffat(indata, flux, x0, y0, alpha, beta, a, b, offset):
+    """Model of PSF using a single Moffat distribution, with elliptical parameters.
+
+    This version does not account for axial alignment
+
+    This function flattens the output, for curve fitting
+
+    """
+    x, y = indata
+    normalize = (beta - 1) / ((a*b) * np.pi * alpha ** 2)
+
+    moffat_fun = offset + flux * normalize * (1 + ( ((x - x0)/a)**2 + ((y - y0)/b) ** 2) / (alpha**2)) ** (-beta)
+
+    return moffat_fun.ravel()
 
 
 # needed packages
@@ -70,19 +114,6 @@ def moffat_fit(indata):
     This fit is rather complicated, so it has been wrapped into a function for convience
     """
 
-    def flat_Moffat(indata, flux, x0, y0, alpha, beta, offset):
-        """Model of PSF using a single Moffat distribution
-
-        This function flattens the output, for curve fitting
-        """
-        x, y = indata
-        normalize = (beta-1)/(np.pi*alpha**2)
-
-        moffat_fun = offset + flux*normalize*(1 + ((x-x0)**2 + (y-y0)**2)/(alpha**2))**(-beta)
-
-        return moffat_fun.ravel()
-
-
     # instead fit data to moffat
     from scipy.optimize import curve_fit
 
@@ -93,31 +124,34 @@ def moffat_fit(indata):
 
     # generate a best guess
     flux_guess = np.amax(indata)
-    y_guess = indata.shape[0]/2
-    x_guess = indata.shape[1]/2
+    y_guess = indata.shape[0] / 2
+    x_guess = indata.shape[1] / 2
     alpha_guess = 4
-    beta_guess = 2
+    beta_guess = 5
+    a_guess = 1
+    b_guess = 1
     offset_guess = 0
 
-    guess = [flux_guess, x_guess, y_guess, alpha_guess, beta_guess, offset_guess]
+    guess = [flux_guess, x_guess, y_guess, alpha_guess, beta_guess, a_guess, b_guess, offset_guess]
 
     # generate parameters for fit
-    m_fit, m_cov = curve_fit(flat_Moffat, (x, y), indata.ravel(), p0=guess)
-
+    fit_result, fit_cov = curve_fit(flat_elliptical_Moffat, (x, y), indata.ravel(), p0=guess)
 
     """Chi squared calculations
     """
     observed = indata.ravel()
 
     m_input = (x, y)
-    flux = m_fit[0]
-    x0 = m_fit[1]
-    y0 = m_fit[2]
-    alpha = m_fit[3]
-    beta = m_fit[4]
-    offset = m_fit[5]
+    flux = fit_result[0]
+    x0 = fit_result[1]
+    y0 = fit_result[2]
+    alpha = fit_result[3]
+    beta = fit_result[4]
+    a = fit_result[5]
+    b = fit_result[6]
+    offset = fit_result
 
-    expected = flat_Moffat(m_input, flux, x0, y0, alpha, beta, offset)
+    expected = flat_elliptical_Moffat(m_input, flux, x0, y0, alpha, beta, a, b, offset)
 
     # calculated raw chi squared
     chisq = sum(np.divide((observed - expected) ** 2, expected + background_dev**2))
@@ -130,7 +164,7 @@ def moffat_fit(indata):
 
     print('normalized chi squared:')
     print(chisq_norm)
-    return m_fit, m_cov
+    return fit_result, fit_cov
 
 
 # do the fit
@@ -173,8 +207,10 @@ x0 = m_fit[1]
 y0 = m_fit[2]
 alpha = m_fit[3]
 beta = m_fit[4]
-offset = m_fit[5]
-result = Moffat(m_input, flux, x0, y0, alpha, beta, offset)
+a = m_fit[5]
+b = m_fit[6]
+offset = m_fit[7]
+result = elliptical_Moffat(m_input, flux, x0, y0, alpha, beta, offset)
 
 # difference between the result and the observed data
 result_difference = object1_data - result
