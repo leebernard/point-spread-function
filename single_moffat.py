@@ -1,4 +1,5 @@
-#
+
+
 # def Moffat(indata, flux, x0, y0, alpha, beta, offset):
 #     """Model of PSF using a single Moffat distribution
 #     """

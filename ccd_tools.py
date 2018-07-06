@@ -262,8 +262,6 @@ def get_regions(get_data=True):
 
             print('Region resolved')
 
-
-
         else:
             print('Region is not a box!')  # error condition
     return regions

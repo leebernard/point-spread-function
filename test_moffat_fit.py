@@ -144,6 +144,7 @@ def moffat_fit(indata):
     return fit_result, fit_cov
 
 
+
 # generate the fake object
 y = np.arange(40)
 x = np.arange(50)
@@ -193,6 +194,8 @@ axisarg[0].imshow(fake_object, norm=norm, origin='lower', cmap='viridis')
 axisarg[1].imshow(result, norm=norm, origin='lower', cmap='viridis')
 axisarg[2].imshow(result_difference, norm=norm, origin='lower', cmap='viridis')
 
+
+
 """Method for showing the plots and the bins on the same figure
 
 plt.figure()
@@ -202,7 +205,7 @@ bar_domain = np.arange(x_slice.shape[0])
 plt.bar(bar_domain, x_slice)
 # second plot, to show the fit curve
 plot_domain = np.arange(0, x_slice.shape[0], .01)
-y_values = ones(plot_domain.size) * 23  # multiplied by y value of slice
+y_values = np.ones(plot_domain.size) * 23  # multiplied by y value of slice
 plot_input = (plot_domain, y_values)
 plot_range = elliptical_Moffat(plot_input, m_fit[0], m_fit[1], m_fit[2], m_fit[3], m_fit[4], m_fit[5], m_fit[6])
 plt.plot(plot_domain, plot_range)
