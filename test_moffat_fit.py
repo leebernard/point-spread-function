@@ -38,7 +38,7 @@ def flat_Moffat(indata, flux, x0, y0, alpha, beta, offset):
 
 
 
-def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, offset):
+def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
     """Model of PSF using a single Moffat distribution, with elliptical parameters.
 
     This version does not account for axial alignment.
@@ -46,10 +46,13 @@ def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, offset):
     This function flattens the output, for curve fitting
     """
     x, y = indata
-    normalize = (beta - 1) / ((a*b) * np.pi)
+    normalize = 1  # (beta - 1) / ((a*b) * np.pi)
 
-    moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2))**(-beta)
-
+    # moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2))**(-beta)
+    A = np.cos(theta)**2/a**2 + np.sin(theta)**2/b**2
+    B = 2*np.cos(theta)*np.sin(theta)*(1/a**2 - 1/b**2)
+    C = np.sin(theta)**2/a**2 + np.cos(theta)**2/b**2
+    moffat_fun = offset + flux*normalize*(1 + A*(x - x0)**2 + B*(x-x0)*(y-y0) + C*(y-y0)**2)**(-beta)
     return moffat_fun
 
 
@@ -156,8 +159,9 @@ y0 = 22
 beta = 5
 a = 4
 b = 7.2
+theta = 0.707
 offset = 0
-fake_object = elliptical_Moffat(m_input, flux, x0, y0, beta, a, b, offset)
+fake_object = elliptical_Moffat(m_input, flux, x0, y0, beta, a, b, theta, offset)
 
 # spike the object with some noise
 noise = np.random.normal(0,40,fake_object.shape)
