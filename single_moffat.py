@@ -211,14 +211,14 @@ y = np.arange(object1_data.shape[0])
 x = np.arange(object1_data.shape[1])
 x, y = np.meshgrid(x, y)
 m_input = (x, y)
-flux = m_fit[0]
-x0 = m_fit[1]
-y0 = m_fit[2]
-beta = m_fit[3]
-a = m_fit[4]
-b = m_fit[5]
-offset = m_fit[6]
-result = elliptical_Moffat(m_input, flux, x0, y0, beta, a, b, offset)
+m_flux = m_fit[0]
+m_x0 = m_fit[1]
+m_y0 = m_fit[2]
+m_beta = m_fit[3]
+m_a = m_fit[4]
+m_b = m_fit[5]
+m_offset = m_fit[6]
+result = elliptical_Moffat(m_input, m_flux, m_x0, m_y0, m_beta, m_a, m_b, m_offset)
 
 # difference between the result and the observed data
 result_difference = object1_data - result
@@ -228,11 +228,18 @@ axisarg[0].imshow(object1_data, norm=norm, origin='lower', cmap='viridis')
 axisarg[1].imshow(result_difference, norm=norm, origin='lower', cmap='viridis')
 
 
-
 # histogram
 plt.figure()
 histogram = plt.hist(object1_data.flatten(),bins=2000, range=[-500, 30000])
 #
 # plt.figure()
 # plt.hist(object1_data.flatten(),bins=2000, range=[-500, 30000])
+
+
+#ratio between the measured flux, and calculated flux
+measured_flux = np.sum(object1_data)
+print('measured flux: ' + str(measured_flux))
+
+print('ratio of calculated to measured: ' + str(m_flux/measured_flux))
+
 plt.show() # show all figures

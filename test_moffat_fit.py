@@ -1,3 +1,5 @@
+
+
 """This file is for testing fit models, by generating fake data
 
 Expect this file to be somewhat messy. Also, expect everything in this file to be unexpectedly deleted"""
@@ -151,8 +153,8 @@ flux = 1000000  # 1 million
 x0 = 26
 y0 = 22
 beta = 5
-a = 2
-b = 3.6
+a = 4
+b = 7.2
 offset = 0
 fake_object = elliptical_Moffat(m_input, flux, x0, y0, beta, a, b, offset)
 
@@ -191,5 +193,18 @@ axisarg[0].imshow(fake_object, norm=norm, origin='lower', cmap='viridis')
 axisarg[1].imshow(result, norm=norm, origin='lower', cmap='viridis')
 axisarg[2].imshow(result_difference, norm=norm, origin='lower', cmap='viridis')
 
+"""Method for showing the plots and the bins on the same figure
 
+plt.figure()
+#first plot, bars to represent pixels
+x_slice = fake_object[23][:]
+bar_domain = np.arange(x_slice.shape[0])
+plt.bar(bar_domain, x_slice)
+# second plot, to show the fit curve
+plot_domain = np.arange(0, x_slice.shape[0], .01)
+y_values = ones(plot_domain.size) * 23  # multiplied by y value of slice
+plot_input = (plot_domain, y_values)
+plot_range = elliptical_Moffat(plot_input, m_fit[0], m_fit[1], m_fit[2], m_fit[3], m_fit[4], m_fit[5], m_fit[6])
+plt.plot(plot_domain, plot_range)
+"""
 plt.show()
