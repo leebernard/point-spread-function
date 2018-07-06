@@ -44,7 +44,7 @@ def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, offset):
     This function flattens the output, for curve fitting
     """
     x, y = indata
-    normalize = 1  #(beta - 1) / ((a*b) * np.pi)
+    normalize = (beta - 1) / ((a*b) * np.pi)
 
     moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2))**(-beta)
 
@@ -60,7 +60,7 @@ def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, offset):
 
     """
     x, y = indata
-    normalize = 1  #(beta - 1) / ((a*b) * np.pi)
+    normalize = (beta - 1) / ((a*b) * np.pi)
 
     moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2))**(-beta)
 
@@ -110,7 +110,7 @@ def moffat_fit(indata):
     bounds = (lower_bounds, upper_bounds)  # bounds set as pair of array-like tuples
 
     # generate parameters for fit
-    fit_result, fit_cov = curve_fit(flat_elliptical_Moffat, (x, y), indata.ravel(), p0=guess, bounds=bounds)
+    fit_result, fit_cov = curve_fit(flat_elliptical_Moffat, (x, y), indata.ravel(), p0=guess, method='lm')
     # fit_result, fit_cov = curve_fit(flat_Moffat, (x, y), indata.ravel(), p0=guess)
 
     """Chi squared calculations
@@ -143,7 +143,7 @@ def moffat_fit(indata):
 
 
 # generate the fake object
-y = np.arange(50)
+y = np.arange(40)
 x = np.arange(50)
 x, y = np.meshgrid(x, y)
 m_input = (x, y)
@@ -157,8 +157,8 @@ offset = 0
 fake_object = elliptical_Moffat(m_input, flux, x0, y0, beta, a, b, offset)
 
 # spike the object with some noise
-noise = np.random.normal(0,10,fake_object.shape)
-# fake_object = fake_object + noise
+noise = np.random.normal(0,40,fake_object.shape)
+fake_object = fake_object + noise
 
 
 
@@ -186,9 +186,10 @@ result_difference = fake_object-result
 # show the generated object and the difference from the fit
 norm = ImageNormalize(stretch=SqrtStretch())
 
-f1, axisarg = plt.subplots(2, 1)
+f1, axisarg = plt.subplots(3, 1)
 axisarg[0].imshow(fake_object, norm=norm, origin='lower', cmap='viridis')
 axisarg[1].imshow(result, norm=norm, origin='lower', cmap='viridis')
+axisarg[2].imshow(result_difference, norm=norm, origin='lower', cmap='viridis')
 
 
 plt.show()
