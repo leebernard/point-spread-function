@@ -1,6 +1,5 @@
 
 
-
 def bias_subtract(HDU, bias_sec=None):  # pass header data unit.  REMEBER, this is pass-by-reference
     """Takes a header data unit, find the bias data from BIASSEC, and performs bias calculations and subtraction.
 
@@ -163,7 +162,6 @@ def get_regions(get_data=True):
 
     # frame_name = 'current frame'
 
-
     class Region:
         """
         This class is for convenient packaging of the region data.
@@ -261,6 +259,8 @@ def get_regions(get_data=True):
             regions.append(current_region)
 
             print('Region resolved')
+
+
 
         else:
             print('Region is not a box!')  # error condition

@@ -82,7 +82,8 @@ def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
     Parameters
     ----------
     indata: list
-        a list of 2 arrays. The first array is the x values per data point. The second array is the y values per data
+        a list of 2 arrays. The first array is the x values per data point. The
+        second array is the y values per data
         point
     flux: float
         Represents the total flux of the object
@@ -121,13 +122,14 @@ def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
 def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
     """Model of PSF using a single Moffat distribution, with elliptical parameters.
 
-    Includes a parameter for  axial alignment. This function flattens the output, for curve fitting.
+    Includes a parameter for  axial alignment. This function flattens the
+    output, for curve fitting.
 
     Parameters
     ----------
     indata: list
-        a list of 2 arrays. The first array is the x values per data point. The second array is the y values per data
-        point
+        a list of 2 arrays. The first array is the x values per data point. The
+        second array is the y values per data point.
     flux: float
         Represents the total flux of the object
     x0: float
@@ -148,7 +150,8 @@ def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
     Returns
     -------
     moffat_fun.ravel(): flattened array-like
-        array of data values produced from the x and y inputs. Flattened, for curve fitting
+        array of data values produced from the x and y inputs. Flattened, for
+        curve fitting
     """
     x, y = indata
     normalize = 1  # (beta - 1) / ((a*b) * np.pi)
@@ -178,6 +181,9 @@ hdu.info()
 # import a list of region definitions
 selected_regions = get_regions(get_data=False)
 
+# sort the regions according to the distance from origin
+selected_regions.sort(key=lambda region: np.sqrt(region.x_coord**2 + region.y_coord**2))
+
 # get the bias subtracted data
 bias_subtracted_data = bias_subtract(hdu[0])
 
@@ -203,7 +209,7 @@ for aperture in aperture_list:
 
     # plot the aperture and mask used to background subtract
     norm = ImageNormalize(stretch=SqrtStretch())
-    f1, axisarg = plt.subplots(2, 2)
+    f1, axisarg = plt.subplots(2, 2, figsize=(10, 10))
     aperture_im = axisarg[0][0].imshow(aperture, norm=norm, origin='lower', cmap='viridis')
     f1.colorbar(aperture_im, ax=axisarg[0][0])
     axisarg[0][0].set_title('Object, with colorscale intensity')
@@ -257,8 +263,8 @@ for aperture in aperture_list:
     else:
 
         error = np.sqrt(np.diag(m_cov))
-        print('Error on parameters')
-        print(error)
+        # print('Error on parameters')
+        # print(error)
 
         x_center = m_fit[1]
         y_center = m_fit[2]
@@ -321,5 +327,3 @@ for aperture in aperture_list:
         # axisarg[0][0].errorbar(x_center, y_center, xerr=x_width, yerr=y_width, ecolor='red')
 
 plt.show()
-
-
