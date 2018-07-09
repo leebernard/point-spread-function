@@ -1,6 +1,18 @@
 
 
-def Gaussian_2d(indata, amplitude, x0, y0, sigma_x, sigma_y, offset):
+# needed packages
+import numpy as np
+# import matplotlib
+import matplotlib.pyplot as plt
+# import re
+from astropy.io import fits
+import pyds9
+from astropy.visualization import SqrtStretch
+from astropy.visualization.mpl_normalize import ImageNormalize
+# import needed functions from the toolbox
+from ccd_tools import bias_subtract, background_subtract, get_regions
+
+def flat_Gaussian_2d(indata, amplitude, x0, y0, sigma_x, sigma_y, offset):
     """Define gaussian function, assuming no correlation between x and y.
 
     Uses a flattened input, and gives a flattened output
@@ -32,10 +44,10 @@ def Gaussian_2d(indata, amplitude, x0, y0, sigma_x, sigma_y, offset):
     return gaussian_fun.ravel()
 
 
-def fake_Gaussian_2d(indata, amplitude, x0, y0, sigma_x, sigma_y, offset):
+def Gaussian_2d(indata, amplitude, x0, y0, sigma_x, sigma_y, offset):
     """same as Guassian_2D, but does not flatten the result.
 
-    This function is used for prducing a 2d array of the result from the fit
+    This function is used for producing a 2d array of the result from the fit
 
     Parameters
     ----------
@@ -64,18 +76,91 @@ def fake_Gaussian_2d(indata, amplitude, x0, y0, sigma_x, sigma_y, offset):
     return gaussian_fun
 
 
-# needed packages
-import numpy as np
-# import matplotlib
-import matplotlib.pyplot as plt
-# import re
-from astropy.io import fits
-import pyds9
-from astropy.visualization import SqrtStretch
-from astropy.visualization.mpl_normalize import ImageNormalize
+def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
+    """Model of PSF using a single Moffat distribution, with elliptical parameters.
 
-# import needed functions from the toolbox
-from ccd_tools import bias_subtract, background_subtract, get_regions
+    Parameters
+    ----------
+    indata: list
+        a list of 2 arrays. The first array is the x values per data point. The second array is the y values per data
+        point
+    flux: float
+        Represents the total flux of the object
+    x0: float
+        horizontal location of the centroid
+    y0: float
+        vertical location of the centroid
+    beta: float
+        change in slope parameter
+    a: float
+        width parameter in the x direction
+    b: float
+        width parameter in the y direction
+    theta: float
+        angle of eccentricity
+    offset: float
+        estimate of background. Should be zero
+
+    Returns
+    -------
+    moffat_fun: array-like
+        array of data values corresponding to the x and y inputs
+    """
+    x, y = indata
+    normalize = 1  # (beta - 1) / ((a*b) * np.pi)
+
+    # moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2))**(-beta)
+    A = np.cos(theta)**2/a**2 + np.sin(theta)**2/b**2
+    B = 2*np.cos(theta)*np.sin(theta)*(1/a**2 - 1/b**2)
+    C = np.sin(theta)**2/a**2 + np.cos(theta)**2/b**2
+    moffat_fun = offset + flux*normalize*(1 + A*(x - x0)**2 + B*(x-x0)*(y-y0) + C*(y-y0)**2)**(-beta)
+
+    return moffat_fun
+
+
+def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
+    """Model of PSF using a single Moffat distribution, with elliptical parameters.
+
+    Includes a parameter for  axial alignment. This function flattens the output, for curve fitting.
+
+    Parameters
+    ----------
+    indata: list
+        a list of 2 arrays. The first array is the x values per data point. The second array is the y values per data
+        point
+    flux: float
+        Represents the total flux of the object
+    x0: float
+        horizontal location of the centroid
+    y0: float
+        vertical location of the centroid
+    beta: float
+        change in slope parameter
+    a: float
+        width parameter in the x direction
+    b: float
+        width parameter in the y direction
+    theta: float
+        angle of eccentricity
+    offset: float
+        estimate of background. Should be zero
+
+    Returns
+    -------
+    moffat_fun.ravel(): flattened array-like
+        array of data values produced from the x and y inputs. Flattened, for curve fitting
+    """
+    x, y = indata
+    normalize = 1  # (beta - 1) / ((a*b) * np.pi)
+
+    # moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2))**(-beta)
+    A = np.cos(theta) ** 2 / a ** 2 + np.sin(theta) ** 2 / b ** 2
+    B = 2 * np.cos(theta) * np.sin(theta) * (1 / a ** 2 - 1 / b ** 2)
+    C = np.sin(theta) ** 2 / a ** 2 + np.cos(theta) ** 2 / b ** 2
+    moffat_fun = offset + flux * normalize * (1 + A * (x - x0) ** 2 + B * (x - x0) * (y - y0) + C * (y - y0) ** 2) ** (
+        -beta)
+
+    return moffat_fun.ravel()
 
 
 # show the ds9 target
@@ -119,14 +204,42 @@ for aperture in aperture_list:
     # plot the aperture and mask used to background subtract
     norm = ImageNormalize(stretch=SqrtStretch())
     f1, axisarg = plt.subplots(2, 2)
-    axisarg[0][0].imshow(aperture, norm=norm, origin='lower', cmap='viridis')
-    axisarg[1][0].imshow(mask, origin='lower', cmap='viridis')
-    axisarg[0][1].hist(aperture.flatten(),bins=500, range=[-500, 5000])
+    aperture_im = axisarg[0][0].imshow(aperture, norm=norm, origin='lower', cmap='viridis')
+    f1.colorbar(aperture_im, ax=axisarg[0][0])
+    axisarg[0][0].set_title('Object, with colorscale intensity')
+    mask_im = axisarg[1][0].imshow(mask, origin='lower', cmap='viridis')
+    axisarg[1][0].set_title('Mask used in background calculations')
+    aperture_hist = axisarg[1][1].hist(aperture.flatten(),bins=500, range=[-100, 5000])
+    axisarg[1][1].set_title('Object histogram after background subtraction')
+
+    # create bounds for the fit, in an attempt to keep it from blowing up
+    """
+    flux_bound = [0, np.inf]
+    x_bound = [0, object1_data.shape[1]]
+    y_bound = [0, object1_data.shape[0]]
+    beta_bound = [1, 20]]
+    a_bound = [0.1, np.inf]
+    b_bound = [0.1, np.inf]
+    theta_bound = 0, np.pi]
+    offset_bound = [-np.inf, np.inf]
+    """
+    # format the bounds
+    lower_bounds = [0, 0, 0, 1, 0.1, 0.1, 0, -np.inf]
+    upper_bounds = [np.inf, aperture.shape[1], aperture.shape[0], 20, np.inf, np.inf, np.pi,
+                    np.inf]
+    bounds = (lower_bounds, upper_bounds)  # bounds set as pair of array-like tuples
 
     # generate a best guess
-    x_guess = aperture.shape[0] / 2
-    y_guess = aperture.shape[1] / 2
-    amp_guess = np.amax(aperture)
+    flux_guess = np.amax(aperture)
+    y_guess = aperture.shape[0]/2
+    x_guess = aperture.shape[1]/2
+    beta_guess = 2
+    a_guess = 2
+    b_guess = 2
+    theta_guess = 0
+    offset_guess = 0
+
+    guess = [flux_guess, x_guess, y_guess, beta_guess, a_guess, b_guess, theta_guess, offset_guess]
 
     # indexes of the apature, remembering that python indexes vert, horz
     y = np.arange(aperture.shape[0])
@@ -136,62 +249,76 @@ for aperture in aperture_list:
 
     # curve fit
     try:
-        g_fit, g_cov = curve_fit(Gaussian_2d, (x, y), aperture.ravel(), p0=[amp_guess, x_guess, y_guess, 1, 1, 1])
+        m_fit, m_cov = curve_fit(flat_elliptical_Moffat, (x, y), aperture.ravel(), p0=guess, bounds=bounds)
 
     except RuntimeError:
         print('Unable to find fit.')
+        axisarg[0][1].set_title('Fit not found within parameter bounds')
     else:
-        print('Resultant parameters')
-        print(g_fit)
 
-        error = np.sqrt(np.diag(g_cov))
+        error = np.sqrt(np.diag(m_cov))
         print('Error on parameters')
         print(error)
 
-        x_center = g_fit[1]
-        y_center = g_fit[2]
-        x_width = g_fit[3]
-        y_width = g_fit[4]
+        x_center = m_fit[1]
+        y_center = m_fit[2]
+        x_width = m_fit[4]
+        y_width = m_fit[5]
 
         """calculate the resulting plot from the fit"""
 
-        # define the inputs for the 2d gaussian
-        g_input = (x, y)
-        amplitude = g_fit[0]
-        x0 = g_fit[1]
-        y0 = g_fit[2]
-        sigma_x = g_fit[3]
-        sigma_y = g_fit[4]
-        offset = g_fit[5]
+        # define the inputs for the elliptical Moffat
+        m_input = (x, y)
+        m_flux = m_fit[0]
+        m_x0 = m_fit[1]
+        m_y0 = m_fit[2]
+        m_beta = m_fit[3]
+        m_a = m_fit[4]
+        m_b = m_fit[5]
+        m_theta = m_fit[6]
+        m_offset = m_fit[7]
 
-        result = fake_Gaussian_2d(g_input, amplitude, x0, y0, sigma_x, sigma_y, offset)
+        result = elliptical_Moffat(m_input, m_flux, m_x0, m_y0, m_beta, m_a, m_b, m_theta, m_offset)
 
         # calculate the difference between the obersved and the result fro mthe fit
         result_difference = aperture - result
 
-        #plot it!
-        axisarg[1][1].imshow(result, norm=norm, origin='lower', cmap='viridis')
-        # add the calculated center and width bars to the aperture plot as a cross
-        # The width of the lines correspond to the width in that direction
-        axisarg[0][0].errorbar(x_center, y_center, xerr=x_width, yerr=y_width, ecolor='red')
 
 
         """Chi squared calculations"""
         observed = aperture.ravel()
 
-        expected = Gaussian_2d(g_input, amplitude, x0, y0, sigma_x, sigma_y, offset)
+        expected = flat_elliptical_Moffat(m_input, m_flux, m_x0, m_y0, m_beta, m_a, m_b, m_theta, m_offset)
 
         # calculated raw chi squared
         chisq = sum(np.divide((observed - expected) ** 2, expected + background_dev**2))
 
         # degrees of freedom, 5 parameters
-        degrees_of_freedom = observed.size - 5
+        degrees_of_freedom = observed.size - 8
 
         # normalized chi squared
         chisq_norm = chisq / degrees_of_freedom
 
+        #print the results
+        print('Resultant parameters')
+        print(f'Flux: {m_flux:.2f}±{error[0]:.2f}')
+        print(f'Center (x, y): {m_x0:.2f}±{error[1]:.2f}, {m_y0:.2f}±{error[2]:.2f}')
+        print(f'beta: {m_beta:.2f}±{error[3]:.2f}')
+        print(f'x-axis eccentricity: {m_a:.2f}±{error[4]:.2f}')
+        print(f'y-axis eccentricity: {m_b:.2f}±{error[5]:.2f}')
+        print(f'angle of eccentricity(Radians: {m_theta:.3f}±{error[6]:.3f}')
+        print(f'background: {m_offset:.2f}±{error[7]:.2f}')
+
         print('Normalized chi squared:')
         print(chisq_norm)
+
+        #plot it!
+        residual_im = axisarg[0][1].imshow(result_difference, norm=norm, origin='lower', cmap='viridis')
+        f1.colorbar(residual_im, ax=axisarg[0][1])
+        axisarg[0][1].set_title(f'Residuals. Chisq={chisq_norm:.2f}')
+        # add the calculated center and width bars to the aperture plot as a cross
+        # The width of the lines correspond to the width in that direction
+        # axisarg[0][0].errorbar(x_center, y_center, xerr=x_width, yerr=y_width, ecolor='red')
 
 plt.show()
 
