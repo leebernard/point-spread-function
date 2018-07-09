@@ -170,13 +170,13 @@ print(pyds9.ds9_targets())
 # create a DS9 object
 ds9 = pyds9.DS9()
 
-# import a list of region definitions
-selected_regions = get_regions(get_data=False)
-
 # import the current fits file loaded in DS9
 hdu = ds9.get_pyfits()
 
 hdu.info()
+
+# import a list of region definitions
+selected_regions = get_regions(get_data=False)
 
 # get the bias subtracted data
 bias_subtracted_data = bias_subtract(hdu[0])
@@ -309,7 +309,7 @@ for aperture in aperture_list:
         print(f'angle of eccentricity(Radians: {m_theta:.3f}±{error[6]:.3f}')
         print(f'background: {m_offset:.2f}±{error[7]:.2f}')
 
-        print('Normalized chi squared:')
+        print('Normalized chi squared: ')
         print(chisq_norm)
 
         #plot it!
