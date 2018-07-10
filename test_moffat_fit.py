@@ -37,23 +37,46 @@ def flat_Moffat(indata, flux, x0, y0, alpha, beta, offset):
     return moffat_fun.ravel()
 
 
-
 def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
     """Model of PSF using a single Moffat distribution, with elliptical parameters.
 
     Includes a parameter for axial alignment.
 
     """
-    x, y = indata
-    normalize = 1  # (beta - 1) / ((a*b) * np.pi)
+    x_in, y_in = indata
 
     # moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2))**(-beta)
     A = np.cos(theta)**2/a**2 + np.sin(theta)**2/b**2
     B = 2*np.cos(theta)*np.sin(theta)*(1/a**2 - 1/b**2)
     C = np.sin(theta)**2/a**2 + np.cos(theta)**2/b**2
-    moffat_fun = offset + flux*normalize*(1 + A*(x - x0)**2 + B*(x-x0)*(y-y0) + C*(y-y0)**2)**(-beta)
 
-    return moffat_fun
+    def moffat_fun(x, y): return (1 + A*(x - x0)**2 + B*(x-x0)*(y-y0) + C*(y-y0)**2)**(-beta)
+
+    # numerical normalization
+    # scale steps according to the size of the array.
+    # produces step size of 1/10 of a pixel
+
+    x_final = np.amax(x_in)
+    y_final = np.amax(y_in)
+
+    h = x_final*10
+    k = y_final*10
+
+    delta_x = x_final/h
+    delta_y = x_final/k
+
+    # create a grid of x and y inputs
+    x_step, y_step = np.meshgrid(np.arange(-1000, 1000), np.arange(-1000, 1000))
+
+    x_step = x_step*delta_x + delta_x/2
+    y_step = y_step*delta_y + delta_y/2
+
+    # sum up the function evaluated at the steps, and multiply by the area of each step
+    normalize = np.sum(moffat_fun(x_step, y_step))*delta_x*delta_y
+
+
+
+    return offset + flux*moffat_fun(x_in, y_in)/normalize
 
 
 def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
@@ -78,7 +101,7 @@ def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
 def moffat_fit(indata):
     """wrapper for the moffat fit procedure.
 
-    This fit is rather complicated, so it has been wrapped into a function for convience
+    This fit is rather complicated, so it has been wrapped into a function for convenience
     """
 
 
