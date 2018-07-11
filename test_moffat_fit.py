@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 from astropy.visualization import SqrtStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
 
+# from scipy.integrate import dblquad
+# dblquad(moffat_fun, -np.inf, np.inf, lambda x: -np.inf, lambda x: np.inf)
 
 # functions to be tested
 def Moffat(indata, flux, x0, y0, alpha, beta, offset):
@@ -56,17 +58,26 @@ def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
     # scale steps according to the size of the array.
     # produces step size of 1/10 of a pixel
 
-    x_final = np.amax(x_in)
-    y_final = np.amax(y_in)
+    # x_final = np.amax(x_in)
+    # y_final = np.amax(y_in)
+    #
 
-    h = x_final*10
-    k = y_final*10
+    # delta_x = .1
+    # delta_y = .1
 
-    delta_x = x_final/h
-    delta_y = x_final/k
+    xmin = int(-1000 + x0)
+    xmax = int(1000 + x0)
+    ymin = int(-1000 + y0)
+    ymax = int(1000 + y0)
+
+    h = 20000
+    k = 20000
+
+    delta_x = (xmax-xmin)/h
+    delta_y = (ymax-ymin)/k
 
     # create a grid of x and y inputs
-    x_step, y_step = np.meshgrid(np.arange(-1000, 1000), np.arange(-1000, 1000))
+    x_step, y_step = np.meshgrid(np.arange(xmin, xmax), np.arange(-ymin, ymax))
 
     x_step = x_step*delta_x + delta_x/2
     y_step = y_step*delta_y + delta_y/2
@@ -74,9 +85,9 @@ def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
     # sum up the function evaluated at the steps, and multiply by the area of each step
     normalize = np.sum(moffat_fun(x_step, y_step))*delta_x*delta_y
 
+    output = offset + flux*moffat_fun(x_in, y_in)/normalize
 
-
-    return offset + flux*moffat_fun(x_in, y_in)/normalize
+    return output
 
 
 def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):

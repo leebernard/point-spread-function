@@ -72,7 +72,9 @@ from astropy.io import fits
 from ccd_tools import bias_subtract, background_subtract
 
 # open fits file, best practice
-file_name = '/home/lee/Documents/k4m_160319_101212_ori.fits.fz'
+# file_name = '/home/lee/Documents/k4m_160319_101212_ori.fits.fz'
+# found a better file
+file_name = '/home/lee/Documents/k4m_160531_050920_ori.fits.fz'
 with fits.open(file_name) as hdu:
     hdu.info()
     data_im1 = hdu[1].data
@@ -88,11 +90,16 @@ with fits.open(file_name) as hdu:
 # ymax = 1595
 # xmin = 1745
 # xmax = 1795
+#
+# ymin = 460
+# ymax = 500
+# xmin = 1490
+# xmax = 1540
 
-ymin = 460
-ymax = 500
-xmin = 1490
-xmax = 1540
+ymin = 1306
+ymax = 1356
+xmin = 1636
+xmax = 1706
 object1_data = bias_subtracted_im1[ymin:ymax, xmin:xmax]
 
 # Background subtract the object
