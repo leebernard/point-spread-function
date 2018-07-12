@@ -145,22 +145,34 @@ bounds = (lower_bounds, upper_bounds)  # bounds set as pair of array-like tuples
 
 m_fit, m_cov = moffat_fit(fake_object, guess=guess, bounds=bounds)
 
+# calculate errors
+error = np.sqrt(np.diag(m_cov))
 print('Resultant parameters')
 
-print(f'flux1: {m_fit[0]: .2f} (actual: {flux1}, starting guess: {flux1_guess})')
-print(f'flux2: {m_fit[1]: .2f} (actual: {flux2}), starting guess: {flux2_guess})')
-print(f'alpha1: {m_fit[2]: .2f} (actual: {alpha1}, starting guess: {alpha1_guess})')
-print(f'alpha2: {m_fit[3]: .2f} (actual: {alpha2}, starting guess: {alpha2_guess})')
-print(f'beta1: {m_fit[4]: .2f} (actual: {beta1}, starting guess: {beta1_guess})')
-print(f'beta2: {m_fit[5]: .2f} (actual: {beta2}, starting guess: {beta2_guess})')
-print(f'x0: {m_fit[6]: .2f} (actual: {x0}, starting guess: {x_guess})')
-print(f'y0: {m_fit[7]: .2f} (actual: {y0}, starting guess: {y_guess})')
-print(f'background: {m_fit[8]: .2f} (actual: {background}, starting guess: {offset_guess})')
+print(f'flux1: {m_fit[0]: .2f}±{error[0]:.2f} (Actual: {flux1})')
+print(f'flux2: {m_fit[1]: .2f}±{error[1]:.2f} (Actual: {flux2})')
+print(f'alpha1: {m_fit[2]: .2f}±{error[2]:.2f} (Actual: {alpha1}')
+print(f'alpha2: {m_fit[3]: .2f}±{error[3]:.2f} (Actual: {alpha2}')
+print(f'beta1: {m_fit[4]: .2f}±{error[4]:.2f} (Actual: {beta1}')
+print(f'beta2: {m_fit[5]: .2f}±{error[5]:.2f} (Actual: {beta2}')
+print(f'x0: {m_fit[6]: .2f}±{error[6]:.2f} (Actual: {x0}')
+print(f'y0: {m_fit[7]: .2f}±{error[7]:.2f} (Actual: {y0}')
+print(f'background: {m_fit[8]: .2f}±{error[8]:.2f} (Actual: {background}')
+# f', starting guess: {flux1_guess})')
+# f', starting guess: {flux2_guess})')
+# f', starting guess: {alpha1_guess})')
+# f', starting guess: {alpha2_guess})')
+# f', starting guess: {beta1_guess})')
+# f', starting guess: {beta2_guess})')
+# f', starting guess: {x_guess})')
+# f', starting guess: {y_guess})')
+# f', starting guess: {offset_guess})')
+
 
 # print the errors
-error = np.sqrt(np.diag(m_cov))
-print('Relative Error on parameters')
-print(str(error/m_fit))
+#
+# print('Relative Error on parameters')
+# print(str(error/m_fit))
 
 
 # generate a plot of fit results
