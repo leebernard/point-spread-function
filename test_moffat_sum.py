@@ -14,13 +14,13 @@ from astropy.visualization import SqrtStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
 
 
-def Moffat_sum(indata, flux1, flux2, alpha1, alpha2, beta1, beta2, x0, y0, offset):
+def Moffat_sum(indata, flux1, flux2, alpha, beta1, beta2, x0, y0, offset):
     x, y = indata
-    normalize1 = (beta1-1)/(np.pi*alpha1**2)
-    normalize2 = (beta2-1)/(np.pi*alpha2**2)
+    normalize1 = (beta1-1)/(np.pi*alpha**2)
+    normalize2 = (beta2-1)/(np.pi*alpha**2)
 
-    moffat1 = flux1*normalize1*(1 + ((x - x0)**2 + (y - y0)**2) / (alpha1**2))**(-beta1)
-    moffat2 = flux2*normalize2*(1 + ((x - x0)**2 + (y - y0)**2) / (alpha2**2))**(-beta2)
+    moffat1 = flux1*normalize1*(1 + ((x - x0)**2 + (y - y0)**2) / (alpha**2))**(-beta1)
+    moffat2 = flux2*normalize2*(1 + ((x - x0)**2 + (y - y0)**2) / (alpha**2))**(-beta2)
     moffat_fun = offset + moffat1 + moffat2
 
     return moffat_fun, moffat1, moffat2
@@ -32,13 +32,13 @@ def moffat_fit(indata, guess=None, bounds=None):
     This fit is rather complicated, so it has been wrapped into a function for convience
     """
 
-    def flat_Moffat_sum(indata, flux1, flux2, alpha1, alpha2, beta1, beta2, x0, y0, offset):
+    def flat_Moffat_sum(indata, flux1, flux2, alpha, beta1, beta2, x0, y0, offset):
         x, y = indata
-        normalize1 = (beta1 - 1) / (np.pi * alpha1 ** 2)
-        normalize2 = (beta2 - 1) / (np.pi * alpha2 ** 2)
+        normalize1 = 1  # (beta1 - 1) / (np.pi * alpha ** 2)
+        normalize2 = 1  # (beta2 - 1) / (np.pi * alpha ** 2)
 
-        moffat1 = flux1 * normalize1 * (1 + ((x - x0) ** 2 + (y - y0) ** 2) / (alpha1 ** 2)) ** (-beta1)
-        moffat2 = flux2 * normalize2 * (1 + ((x - x0) ** 2 + (y - y0) ** 2) / (alpha2 ** 2)) ** (-beta2)
+        moffat1 = flux1 * normalize1 * (1 + ((x - x0) ** 2 + (y - y0) ** 2) / (alpha ** 2)) ** (-beta1)
+        moffat2 = flux2 * normalize2 * (1 + ((x - x0) ** 2 + (y - y0) ** 2) / (alpha ** 2)) ** (-beta2)
         moffat_fun = offset + moffat1 + moffat2
 
         return moffat_fun.ravel()
@@ -65,18 +65,17 @@ def moffat_fit(indata, guess=None, bounds=None):
     m_input = (x, y)
     flux1 = fit[0]
     flux2 = fit[1]
-    alpha1 = fit[2]
-    alpha2 = fit[3]
-    beta1 = fit[4]
-    beta2 = fit[5]
-    x0 = fit[6]
-    y0 = fit[7]
-    background = fit[8]
+    alpha = fit[2]
+    beta1 = fit[3]
+    beta2 = fit[4]
+    x0 = fit[5]
+    y0 = fit[6]
+    background = fit[7]
 
-    expected = flat_Moffat_sum(m_input, flux1, flux2, alpha1, alpha2, beta1, beta2, x0, y0, background)
+    expected = flat_Moffat_sum(m_input, flux1, flux2, alpha, beta1, beta2, x0, y0, background)
 
-    # calculated raw chi squared
-    chisq = sum(np.divide((expected - observed) ** 2, (observed)))
+    # calculated raw chi squared, including background noise
+    chisq = sum(np.divide((observed - expected) ** 2, (expected + 40)))
 
     # degrees of freedom, 5 parameters
     degrees_of_freedom = observed.size - 6
@@ -100,14 +99,16 @@ x0 = 22
 y0 = 25
 flux1 = 80000
 flux2 = 20000
-alpha1 = 6
+alpha = 6
 beta1 = 7
-alpha2 = 6
 beta2 = 2
 background = 0
 
-fake_object, fake_part1, fake_part2 = Moffat_sum(m_input, flux1, flux2, alpha1, alpha2, beta1, beta2, x0, y0, background)
+fake_object, fake_part1, fake_part2 = Moffat_sum(m_input, flux1, flux2, alpha, beta1, beta2, x0, y0, background)
 
+# spike the object with some noise
+noise = np.random.normal(0,40,fake_object.shape)
+# fake_object = fake_object + noise
 
 # make a fit #######
 
@@ -118,18 +119,16 @@ flux1_guess = np.amax(fake_object)
 flux2_guess = flux1_guess
 beta1_guess = 3
 beta2_guess = 1.5
-alpha1_guess = 2
-alpha2_guess = 2
+alpha_guess = 2
 offset_guess = 0
-guess = [flux1_guess, flux2_guess, alpha1_guess, alpha2_guess, beta1_guess, beta2_guess, x_guess, y_guess,
+guess = [flux1_guess, flux2_guess, alpha_guess, beta1_guess, beta2_guess, x_guess, y_guess,
          offset_guess]
 
 # create bounds for the fit, in an attempt to keep it from blowing up
 """
 flux1_bound = [0, np.inf]
 flux2_bound = [0, np.inf]
-alpha1_bound = [0.1, np.inf]
-alpha2_bound = [0.1, np.inf]
+alpha_bound = [0.1, 20]
 beta1_bound = [1, 20]
 beta2_bound = [1, 20]
 x_bound = [0, object1_data.shape[1]]
@@ -137,8 +136,8 @@ y_bound = [0, object1_data.shape[0]]
 offset_bound = [-np.inf, np.inf]
 """
 # format the bounds
-lower_bounds = [0, 0, 0.1, 0.1, 1, 1, 0, 0, -np.inf]
-upper_bounds = [np.inf, np.inf, np.inf, np.inf, 20, 20, fake_object.shape[1], fake_object.shape[0],
+lower_bounds = [0, 0, 0.1, 1, 1, 0, 0, -np.inf]
+upper_bounds = [np.inf, np.inf, 20, 20, 20, fake_object.shape[1], fake_object.shape[0],
                 np.inf]
 
 bounds = (lower_bounds, upper_bounds)  # bounds set as pair of array-like tuples
@@ -151,16 +150,16 @@ print('Resultant parameters')
 
 print(f'flux1: {m_fit[0]: .2f}±{error[0]:.2f} (Actual: {flux1})')
 print(f'flux2: {m_fit[1]: .2f}±{error[1]:.2f} (Actual: {flux2})')
-print(f'alpha1: {m_fit[2]: .2f}±{error[2]:.2f} (Actual: {alpha1}')
-print(f'alpha2: {m_fit[3]: .2f}±{error[3]:.2f} (Actual: {alpha2}')
-print(f'beta1: {m_fit[4]: .2f}±{error[4]:.2f} (Actual: {beta1}')
-print(f'beta2: {m_fit[5]: .2f}±{error[5]:.2f} (Actual: {beta2}')
-print(f'x0: {m_fit[6]: .2f}±{error[6]:.2f} (Actual: {x0}')
-print(f'y0: {m_fit[7]: .2f}±{error[7]:.2f} (Actual: {y0}')
-print(f'background: {m_fit[8]: .2f}±{error[8]:.2f} (Actual: {background}')
+print(f'alpha: {m_fit[2]: .2f}±{error[2]:.2f} (Actual: {alpha})')
+# print(f'alpha2: {m_fit[3]: .2f}±{error[3]:.2f} (Actual: {alpha2})')
+print(f'beta1: {m_fit[3]: .2f}±{error[3]:.2f} (Actual: {beta1})')
+print(f'beta2: {m_fit[4]: .2f}±{error[4]:.2f} (Actual: {beta2})')
+print(f'x0: {m_fit[5]: .2f}±{error[5]:.2f} (Actual: {x0})')
+print(f'y0: {m_fit[6]: .2f}±{error[6]:.2f} (Actual: {y0})')
+print(f'background: {m_fit[7]: .2f}±{error[7]:.2f} (Actual: {background})')
 # f', starting guess: {flux1_guess})')
 # f', starting guess: {flux2_guess})')
-# f', starting guess: {alpha1_guess})')
+# f', starting guess: {alpha_guess})')
 # f', starting guess: {alpha2_guess})')
 # f', starting guess: {beta1_guess})')
 # f', starting guess: {beta2_guess})')
@@ -178,23 +177,23 @@ print(f'background: {m_fit[8]: .2f}±{error[8]:.2f} (Actual: {background}')
 # generate a plot of fit results
 rflux1 = m_fit[0]
 rflux2 = m_fit[1]
-ralpha1 = m_fit[2]
-ralpha2 = m_fit[3]
-rbeta1 = m_fit[4]
-rbeta2 = m_fit[5]
-rx0 = m_fit[6]
-ry0 = m_fit[7]
-rbackground = m_fit[8]
+ralpha = m_fit[2]
+# ralpha2 = m_fit[3]
+rbeta1 = m_fit[3]
+rbeta2 = m_fit[4]
+rx0 = m_fit[5]
+ry0 = m_fit[6]
+rbackground = m_fit[7]
 
-result, result_part1, result_part2 = Moffat_sum(m_input, rflux1, rflux2, ralpha1, ralpha2, rbeta1, rbeta2, rx0, ry0, rbackground)
+result, result_part1, result_part2 = Moffat_sum(m_input, rflux1, rflux2, ralpha, rbeta1, rbeta2, rx0, ry0, rbackground)
 
 result_difference = fake_object - result
 difference_part1 = -(fake_part1 - result_part1)
-if (np.amax(difference_part1) - np.amin(difference_part1)) < 0:
-    difference_part1 = -difference_part1
+if (np.amax(difference_part1) + np.amin(difference_part1)) < 0:
+    difference_part1 = difference_part1*-1
 
 difference_part2 = fake_part2 - result_part2
-if (np.amax(difference_part2) - np.amin(difference_part2)) < 0:
+if (np.amax(difference_part2) + np.amin(difference_part2)) < 0:
     difference_part2 = -difference_part2
 
 
