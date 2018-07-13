@@ -55,7 +55,7 @@ def moffat_fit(indata, guess=None, bounds=None):
 
 
     # generate parameters for fit
-    fit, cov = curve_fit(flat_Moffat_sum, (x, y), indata.ravel(), bounds=bounds, p0=guess)
+    fit, cov = curve_fit(flat_Moffat_sum, (x, y), indata.ravel(), p0=guess)
 
 
     """Chi squared calculations

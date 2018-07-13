@@ -107,16 +107,44 @@ def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
     moffat_fun: array-like
         array of data values corresponding to the x and y inputs
     """
-    x, y = indata
-    normalize = 1  # (beta - 1) / ((a*b) * np.pi)
+    x_in, y_in = indata
 
     # moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2))**(-beta)
     A = np.cos(theta)**2/a**2 + np.sin(theta)**2/b**2
     B = 2*np.cos(theta)*np.sin(theta)*(1/a**2 - 1/b**2)
     C = np.sin(theta)**2/a**2 + np.cos(theta)**2/b**2
-    moffat_fun = offset + flux*normalize*(1 + A*(x - x0)**2 + B*(x-x0)*(y-y0) + C*(y-y0)**2)**(-beta)
 
-    return moffat_fun
+    def moffat_fun(x, y): return (1 + A*(x - x0)**2 + B*(x - x0)*(y - y0) + C*(y - y0)**2)**(-beta)
+
+    # numerical normalization
+    # scale steps according to the size of the array.
+
+    x_final = np.amax(x_in) + 20
+    y_final = np.amax(y_in) + 20
+    x_start = np.amin(x_in) - 20
+    y_start = np.amin(y_in) - 20
+    # delta_x = .1
+    # delta_y = .1
+
+    h = 300
+    k = 300
+
+    delta_x = (x_final-x_start)/h
+    delta_y = (y_final-y_start)/k
+
+    # create a grid of x and y inputs
+    x_step, y_step = np.meshgrid(np.arange(x_start + delta_x/2, x_final + delta_x/2, delta_x), np.arange(y_start + delta_y/2, y_final + delta_y/2, delta_y))
+
+    # sum up the function evaluated at the steps, and multiply by the area of each step
+    normalize = np.sum(moffat_fun(x_step, y_step))*delta_x*delta_y
+    # normalize = 1
+
+    # forget that, just integrate it
+    # normalize, norm_err = dblquad(moffat_fun, -np.inf, np.inf, lambda x: -np.inf, lambda x: np.inf)
+
+    output = offset + flux*moffat_fun(x_in, y_in)/normalize
+
+    return output
 
 
 def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
@@ -153,18 +181,49 @@ def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
         array of data values produced from the x and y inputs. Flattened, for
         curve fitting
     """
-    x, y = indata
-    normalize = 1  # (beta - 1) / ((a*b) * np.pi)
+    x_in, y_in = indata
 
     # moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2))**(-beta)
     A = np.cos(theta) ** 2 / a ** 2 + np.sin(theta) ** 2 / b ** 2
     B = 2 * np.cos(theta) * np.sin(theta) * (1 / a ** 2 - 1 / b ** 2)
     C = np.sin(theta) ** 2 / a ** 2 + np.cos(theta) ** 2 / b ** 2
-    moffat_fun = offset + flux * normalize * (1 + A * (x - x0) ** 2 + B * (x - x0) * (y - y0) + C * (y - y0) ** 2) ** (
-        -beta)
 
-    return moffat_fun.ravel()
+    def moffat_fun(x, y): return (1 + A*(x - x0)**2 + B*(x - x0)*(y - y0) + C*(y - y0)**2)**(-beta)
 
+    # numerical normalization
+    # scale steps according to the size of the array.
+
+    x_final = np.amax(x_in) + 20
+    y_final = np.amax(y_in) + 20
+    x_start = np.amin(x_in) - 20
+    y_start = np.amin(y_in) - 20
+    # delta_x = .1
+    # delta_y = .1
+
+    h = 300
+    k = 300
+
+    delta_x = (x_final-x_start)/h
+    delta_y = (y_final-y_start)/k
+
+    # create a grid of x and y inputs
+    x_step, y_step = np.meshgrid(np.arange(x_start + delta_x/2, x_final + delta_x/2, delta_x), np.arange(y_start + delta_y/2, y_final + delta_y/2, delta_y))
+
+    # sum up the function evaluated at the steps, and multiply by the area of each step
+    normalize = np.sum(moffat_fun(x_step, y_step))*delta_x*delta_y
+    # normalize = 1
+
+    # forget that, just integrate it
+    # normalize, norm_err = dblquad(moffat_fun, -np.inf, np.inf, lambda x: -np.inf, lambda x: np.inf)
+
+    output = offset + flux*moffat_fun(x_in, y_in)/normalize
+
+    return output.ravel()
+
+
+# check if ds9 is accesible
+if not pyds9.ds9_targets():
+    input('DS9 target not found. Please start/restart DS9, then press enter')
 
 # show the ds9 target
 print('ds9 target instance')
@@ -186,12 +245,16 @@ selected_regions.sort(key=lambda region: np.sqrt(region.x_coord**2 + region.y_co
 
 # get the bias subtracted data
 bias_subtracted_data = bias_subtract(hdu[0])
+gain = hdu[0].header['GAIN']
 
 # use the regions to produce apertures of thedata
 # also background subtract the data
 aperture_list = []  # list for holding aperture data
 for region in selected_regions:
     current_aperture = bias_subtracted_data[region.ymin:region.ymax, region.xmin:region.xmax]
+
+    # convert to electron count
+    current_aperture = current_aperture*gain
     aperture_list.append(current_aperture)
 
 
@@ -206,6 +269,9 @@ for aperture in aperture_list:
     print('---------------------')
     # background subtract the aperture
     aperture, mask, background_dev = background_subtract(aperture)
+
+    # generate the associated pixel error
+    aperture_err = np.sqrt(aperture + background_dev**2)
 
     # plot the aperture and mask used to background subtract
     norm = ImageNormalize(stretch=SqrtStretch())
@@ -226,17 +292,17 @@ for aperture in aperture_list:
     beta_bound = [1, 20]]
     a_bound = [0.1, np.inf]
     b_bound = [0.1, np.inf]
-    theta_bound = 0, np.pi]
+    theta_bound = 0, np.pi/2]
     offset_bound = [-np.inf, np.inf]
     """
     # format the bounds
     lower_bounds = [0, 0, 0, 1, 0.1, 0.1, 0, -np.inf]
-    upper_bounds = [np.inf, aperture.shape[1], aperture.shape[0], 20, np.inf, np.inf, np.pi,
+    upper_bounds = [np.inf, aperture.shape[1], aperture.shape[0], 20, np.inf, np.inf, np.pi/2,
                     np.inf]
     bounds = (lower_bounds, upper_bounds)  # bounds set as pair of array-like tuples
 
     # generate a best guess
-    flux_guess = np.amax(aperture)
+    flux_guess = np.amax(aperture)*10
     y_guess = aperture.shape[0]/2
     x_guess = aperture.shape[1]/2
     beta_guess = 2
@@ -255,7 +321,8 @@ for aperture in aperture_list:
 
     # curve fit
     try:
-        m_fit, m_cov = curve_fit(flat_elliptical_Moffat, (x, y), aperture.ravel(), p0=guess, bounds=bounds)
+        m_fit, m_cov = curve_fit(flat_elliptical_Moffat, (x, y), aperture.ravel(), sigma=aperture_err.ravel(), p0=guess,
+                                 bounds=bounds)
 
     except RuntimeError:
         print('Unable to find fit.')
