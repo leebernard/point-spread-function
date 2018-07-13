@@ -76,7 +76,7 @@ def Gaussian_2d(indata, amplitude, x0, y0, sigma_x, sigma_y, offset):
     return gaussian_fun
 
 
-def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
+def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta):
     """Model of PSF using a single Moffat distribution, with elliptical parameters.
 
     Parameters
@@ -142,12 +142,12 @@ def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
     # forget that, just integrate it
     # normalize, norm_err = dblquad(moffat_fun, -np.inf, np.inf, lambda x: -np.inf, lambda x: np.inf)
 
-    output = offset + flux*moffat_fun(x_in, y_in)/normalize
+    output = flux*moffat_fun(x_in, y_in)/normalize
 
     return output
 
 
-def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
+def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta):
     """Model of PSF using a single Moffat distribution, with elliptical parameters.
 
     Includes a parameter for  axial alignment. This function flattens the
@@ -216,7 +216,7 @@ def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
     # forget that, just integrate it
     # normalize, norm_err = dblquad(moffat_fun, -np.inf, np.inf, lambda x: -np.inf, lambda x: np.inf)
 
-    output = offset + flux*moffat_fun(x_in, y_in)/normalize
+    output = flux*moffat_fun(x_in, y_in)/normalize
 
     return output.ravel()
 
@@ -293,12 +293,11 @@ for aperture in aperture_list:
     a_bound = [0.1, np.inf]
     b_bound = [0.1, np.inf]
     theta_bound = 0, np.pi/2]
-    offset_bound = [-np.inf, np.inf]
+    offset_bound = [-np.inf, np.inf] REMOVED
     """
     # format the bounds
-    lower_bounds = [0, 0, 0, 1, 0.1, 0.1, 0, -np.inf]
-    upper_bounds = [np.inf, aperture.shape[1], aperture.shape[0], 20, np.inf, np.inf, np.pi/2,
-                    np.inf]
+    lower_bounds = [0, 0, 0, 1, 0.1, 0.1, 0]
+    upper_bounds = [np.inf, aperture.shape[1], aperture.shape[0], 20, np.inf, np.inf, np.pi/2]
     bounds = (lower_bounds, upper_bounds)  # bounds set as pair of array-like tuples
 
     # generate a best guess
@@ -309,9 +308,9 @@ for aperture in aperture_list:
     a_guess = 2
     b_guess = 2
     theta_guess = 0
-    offset_guess = 0
+    # offset_guess = 0
 
-    guess = [flux_guess, x_guess, y_guess, beta_guess, a_guess, b_guess, theta_guess, offset_guess]
+    guess = [flux_guess, x_guess, y_guess, beta_guess, a_guess, b_guess, theta_guess]
 
     # indexes of the apature, remembering that python indexes vert, horz
     y = np.arange(aperture.shape[0])
@@ -349,9 +348,9 @@ for aperture in aperture_list:
         m_a = m_fit[4]
         m_b = m_fit[5]
         m_theta = m_fit[6]
-        m_offset = m_fit[7]
+        # m_offset = m_fit[7]
 
-        result = elliptical_Moffat(m_input, m_flux, m_x0, m_y0, m_beta, m_a, m_b, m_theta, m_offset)
+        result = elliptical_Moffat(m_input, m_flux, m_x0, m_y0, m_beta, m_a, m_b, m_theta)
 
         # calculate the difference between the obersved and the result fro mthe fit
         result_difference = aperture - result
@@ -361,7 +360,7 @@ for aperture in aperture_list:
         """Chi squared calculations"""
         observed = aperture.ravel()
 
-        expected = flat_elliptical_Moffat(m_input, m_flux, m_x0, m_y0, m_beta, m_a, m_b, m_theta, m_offset)
+        expected = flat_elliptical_Moffat(m_input, m_flux, m_x0, m_y0, m_beta, m_a, m_b, m_theta)
 
         # calculated raw chi squared
         chisq = sum(np.divide((observed - expected) ** 2, expected + background_dev**2))
@@ -380,7 +379,7 @@ for aperture in aperture_list:
         print(f'x-axis eccentricity: {m_a:.2f}±{error[4]:.2f}')
         print(f'y-axis eccentricity: {m_b:.2f}±{error[5]:.2f}')
         print(f'angle of eccentricity(Radians: {m_theta:.3f}±{error[6]:.3f}')
-        print(f'background: {m_offset:.2f}±{error[7]:.2f}')
+        # print(f'background: {m_offset:.2f}±{error[7]:.2f}')
 
         print('Normalized chi squared: ')
         print(chisq_norm)
