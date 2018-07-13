@@ -19,8 +19,8 @@ def Moffat_sum(indata, flux1, flux2, alpha, beta1, beta2, x0, y0, offset):
     normalize1 = (beta1-1)/(np.pi*alpha**2)
     normalize2 = (beta2-1)/(np.pi*alpha**2)
 
-    moffat1 = flux1*normalize1*(1 + ((x - x0)**2 + (y - y0)**2) / (alpha**2))**(-beta1)
-    moffat2 = flux2*normalize2*(1 + ((x - x0)**2 + (y - y0)**2) / (alpha**2))**(-beta2)
+    moffat1 = flux1*normalize1*(1 + ((x - x0)**2 + (y - y0)**2)/(alpha**2))**(-beta1)
+    moffat2 = flux2*normalize2*(1 + ((x - x0)**2 + (y - y0)**2)/(alpha**2))**(-beta2)
     moffat_fun = offset + moffat1 + moffat2
 
     return moffat_fun, moffat1, moffat2
@@ -34,11 +34,11 @@ def moffat_fit(indata, guess=None, bounds=None):
 
     def flat_Moffat_sum(indata, flux1, flux2, alpha, beta1, beta2, x0, y0, offset):
         x, y = indata
-        normalize1 = 1  # (beta1 - 1) / (np.pi * alpha ** 2)
-        normalize2 = 1  # (beta2 - 1) / (np.pi * alpha ** 2)
+        normalize1 = (beta1 - 1) / (np.pi*alpha**2)
+        normalize2 = (beta2 - 1) / (np.pi*alpha**2)
 
-        moffat1 = flux1 * normalize1 * (1 + ((x - x0) ** 2 + (y - y0) ** 2) / (alpha ** 2)) ** (-beta1)
-        moffat2 = flux2 * normalize2 * (1 + ((x - x0) ** 2 + (y - y0) ** 2) / (alpha ** 2)) ** (-beta2)
+        moffat1 = flux1*normalize1*(1 + ((x - x0)**2 + (y - y0)**2)/(alpha**2))**(-beta1)
+        moffat2 = flux2*normalize2*(1 + ((x - x0)**2 + (y - y0)**2)/(alpha**2))**(-beta2)
         moffat_fun = offset + moffat1 + moffat2
 
         return moffat_fun.ravel()
@@ -75,7 +75,7 @@ def moffat_fit(indata, guess=None, bounds=None):
     expected = flat_Moffat_sum(m_input, flux1, flux2, alpha, beta1, beta2, x0, y0, background)
 
     # calculated raw chi squared, including background noise
-    chisq = sum(np.divide((observed - expected) ** 2, (expected + 40)))
+    chisq = sum(np.divide((observed - expected) ** 2, (expected + 0)))
 
     # degrees of freedom, 5 parameters
     degrees_of_freedom = observed.size - 6
@@ -117,9 +117,9 @@ y_guess = fake_object.shape[0] / 2
 x_guess = fake_object.shape[1] / 2
 flux1_guess = np.amax(fake_object)
 flux2_guess = flux1_guess
-beta1_guess = 3
+beta1_guess = 7
 beta2_guess = 1.5
-alpha_guess = 2
+alpha_guess = 4
 offset_guess = 0
 guess = [flux1_guess, flux2_guess, alpha_guess, beta1_guess, beta2_guess, x_guess, y_guess,
          offset_guess]

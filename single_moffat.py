@@ -30,16 +30,44 @@ def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
     Includes a parameter for axial alignment.
 
     """
-    x, y = indata
-    normalize = 1  # (beta - 1) / ((a*b) * np.pi)
+    x_in, y_in = indata
+    # normalize = 1  # (beta - 1) / ((a*b) * np.pi)
 
     # moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2))**(-beta)
-    A = np.cos(theta)**2/a**2 + np.sin(theta)**2/b**2
-    B = 2*np.cos(theta)*np.sin(theta)*(1/a**2 - 1/b**2)
-    C = np.sin(theta)**2/a**2 + np.cos(theta)**2/b**2
-    moffat_fun = offset + flux*normalize*(1 + A*(x - x0)**2 + B*(x-x0)*(y-y0) + C*(y-y0)**2)**(-beta)
+    A = np.cos(theta) ** 2 / a ** 2 + np.sin(theta) ** 2 / b ** 2
+    B = 2 * np.cos(theta) * np.sin(theta) * (1 / a ** 2 - 1 / b ** 2)
+    C = np.sin(theta) ** 2 / a ** 2 + np.cos(theta) ** 2 / b ** 2
 
-    return moffat_fun
+    def moffat_fun(x, y): return (1 + A*(x - x0)**2 + B*(x - x0)*(y - y0) + C*(y - y0)**2)**(-beta)
+
+    # numerical normalization
+    # scale steps according to the size of the array.
+
+    x_final = np.amax(x_in) + 20
+    y_final = np.amax(y_in) + 20
+    x_start = np.amin(x_in) - 20
+    y_start = np.amin(y_in) - 20
+    # delta_x = .1
+    # delta_y = .1
+
+    h = 500
+    k = 500
+
+    delta_x = (x_final-x_start)/h
+    delta_y = (y_final-y_start)/k
+
+    # create a grid of x and y inputs
+    x_step, y_step = np.meshgrid(np.arange(x_start + delta_x/2, x_final + delta_x/2, delta_x), np.arange(y_start + delta_y/2, y_final + delta_y/2, delta_y))
+
+    # sum up the function evaluated at the steps, and multiply by the area of each step
+    normalize = np.sum(moffat_fun(x_step, y_step))*delta_x*delta_y
+
+    # forget that, just integrate it
+    # normalize, norm_err = dblquad(moffat_fun, -np.inf, np.inf, lambda x: -np.inf, lambda x: np.inf)
+
+    output = offset + flux*moffat_fun(x_in, y_in)/normalize
+
+    return output
 
 
 def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
@@ -48,17 +76,44 @@ def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta, offset):
     Includes a parameter for  axial alignment. This function flattens the output, for curve fitting.
 
     """
-    x, y = indata
-    normalize = 1  # (beta - 1) / ((a*b) * np.pi)
+    x_in, y_in = indata
+    # normalize = 1  # (beta - 1) / ((a*b) * np.pi)
 
     # moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2))**(-beta)
     A = np.cos(theta) ** 2 / a ** 2 + np.sin(theta) ** 2 / b ** 2
     B = 2 * np.cos(theta) * np.sin(theta) * (1 / a ** 2 - 1 / b ** 2)
     C = np.sin(theta) ** 2 / a ** 2 + np.cos(theta) ** 2 / b ** 2
-    moffat_fun = offset + flux * normalize * (1 + A * (x - x0) ** 2 + B * (x - x0) * (y - y0) + C * (y - y0) ** 2) ** (
-        -beta)
 
-    return moffat_fun.ravel()
+    def moffat_fun(x, y): return (1 + A*(x - x0)**2 + B*(x - x0)*(y - y0) + C*(y - y0)**2)**(-beta)
+
+    # numerical normalization
+    # scale steps according to the size of the array.
+
+    x_final = np.amax(x_in) + 20
+    y_final = np.amax(y_in) + 20
+    x_start = np.amin(x_in) - 20
+    y_start = np.amin(y_in) - 20
+    # delta_x = .1
+    # delta_y = .1
+
+    h = 500
+    k = 500
+
+    delta_x = (x_final-x_start)/h
+    delta_y = (y_final-y_start)/k
+
+    # create a grid of x and y inputs
+    x_step, y_step = np.meshgrid(np.arange(x_start + delta_x/2, x_final + delta_x/2, delta_x), np.arange(y_start + delta_y/2, y_final + delta_y/2, delta_y))
+
+    # sum up the function evaluated at the steps, and multiply by the area of each step
+    normalize = np.sum(moffat_fun(x_step, y_step))*delta_x*delta_y
+
+    # forget that, just integrate it
+    # normalize, norm_err = dblquad(moffat_fun, -np.inf, np.inf, lambda x: -np.inf, lambda x: np.inf)
+
+    output = offset + flux*moffat_fun(x_in, y_in)/normalize
+
+    return output.ravel()
 
 # needed packages
 import numpy as np
@@ -231,7 +286,7 @@ print(f'background: {m_fit[7]:.2f}±{error[7]:.2f}')
 # print('Covariance matrix, if that is interesting')
 # print(m_cov)
 
-print('peak count')
+print('peak electron count')
 print(np.amax(object1_data))
 
 # display the result as a cross. The width of the lines correspond to the width in that direction

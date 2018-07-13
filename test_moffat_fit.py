@@ -58,36 +58,29 @@ def elliptical_Moffat(indata, flux, x0, y0, alpha, beta, roh, theta, offset):
     # scale steps according to the size of the array.
     # produces step size of 1/10 of a pixel
 
-    # x_final = np.amax(x_in)
-    # y_final = np.amax(y_in)
-    #
-
+    x_final = np.amax(x_in) + 20
+    y_final = np.amax(y_in) + 20
+    x_start = np.amin(x_in) - 20
+    y_start = np.amin(y_in) - 20
     # delta_x = .1
     # delta_y = .1
 
-    xmin = int(-1000 + x0)
-    xmax = int(1000 + x0)
-    ymin = int(-1000 + y0)
-    ymax = int(1000 + y0)
+    h = 500
+    k = 500
 
-    h = 20000
-    k = 20000
-
-    delta_x = (xmax-xmin)/h
-    delta_y = (ymax-ymin)/k
+    delta_x = (x_final-x_start)/h
+    delta_y = (y_final-y_start)/k
 
     # create a grid of x and y inputs
-    x_step, y_step = np.meshgrid(np.arange(xmin, xmax), np.arange(-ymin, ymax))
+    x_step, y_step = np.meshgrid(np.arange(x_start + delta_x/2, x_final + delta_x/2, delta_x), np.arange(y_start + delta_y/2, y_final + delta_y/2, delta_y))
 
-    x_step = x_step*delta_x + delta_x/2
-    y_step = y_step*delta_y + delta_y/2
 
     # sum up the function evaluated at the steps, and multiply by the area of each step
-    # normalize = np.sum(moffat_fun(x_step, y_step))*delta_x*delta_y
+    normalize = np.sum(moffat_fun(x_step, y_step))*delta_x*delta_y
 
     #forget that, just integrate it
     # normalize, norm_err = dblquad(moffat_fun, -np.inf, np.inf, lambda x: -np.inf, lambda x: np.inf)
-    normalize = 1
+
     output = offset + flux*moffat_fun(x_in, y_in)/normalize
 
     return output
@@ -108,11 +101,34 @@ def flat_elliptical_Moffat(indata, flux, x0, y0, alpha, beta, roh, theta, offset
 
     def moffat_fun(x, y): return (1 + A*(x - x0)**2 + B*(x - x0)*(y - y0) + C*(y - y0)**2)**(-beta)
 
-    # forget that, just integrate it
-    # normalize, norm_err = dblquad(moffat_fun, -np.inf, np.inf, lambda x: -np.inf, lambda x: np.inf)
-    normalize = 1
+    # numerical normalization
+    # scale steps according to the size of the array.
 
-    output = offset + flux * moffat_fun(x_in, y_in) / normalize
+    x_final = np.amax(x_in) + 20
+    y_final = np.amax(y_in) + 20
+    x_start = np.amin(x_in) - 20
+    y_start = np.amin(y_in) - 20
+    # delta_x = .1
+    # delta_y = .1
+
+    h = 500
+    k = 500
+
+    delta_x = (x_final-x_start)/h
+    delta_y = (y_final-y_start)/k
+
+    # create a grid of x and y inputs
+    x_step, y_step = np.meshgrid(np.arange(x_start + delta_x/2, x_final + delta_x/2, delta_x), np.arange(y_start + delta_y/2, y_final + delta_y/2, delta_y))
+
+
+    # sum up the function evaluated at the steps, and multiply by the area of each step
+    normalize = np.sum(moffat_fun(x_step, y_step))*delta_x*delta_y
+
+    #forget that, just integrate it
+    # normalize, norm_err = dblquad(moffat_fun, -np.inf, np.inf, lambda x: -np.inf, lambda x: np.inf)
+
+    output = offset + flux*moffat_fun(x_in, y_in)/normalize
+
 
     return output.ravel()
 
@@ -161,7 +177,7 @@ def moffat_fit(indata):
     bounds = (lower_bounds, upper_bounds)  # bounds set as pair of array-like tuples
 
     # generate parameters for fit
-    fit_result, fit_cov = curve_fit(flat_elliptical_Moffat, (x, y), indata.ravel(), p0=guess, bounds=bounds, method='trf')
+    fit_result, fit_cov = curve_fit(flat_elliptical_Moffat, (x, y), indata.ravel(), p0=guess, bounds=bounds)
     # fit_result, fit_cov = curve_fit(flat_Moffat, (x, y), indata.ravel(), p0=guess)
 
     """Chi squared calculations
@@ -203,10 +219,10 @@ m_input = (x, y)
 flux = 1000000  # 1 million
 x0 = 26
 y0 = 22
-alpha = 11
+alpha = 6
 beta = 5
 roh = 1.3
-theta = 0.707
+theta = .707
 offset = 0
 fake_object = elliptical_Moffat(m_input, flux, x0, y0, alpha, beta, roh, theta, offset)
 
