@@ -77,6 +77,8 @@ def background_subtract(im_data):
         The background subtracted data.
     mask: numpy array bool
         The mask used to shield the object
+    std: float
+        The standard deviation on the background
     """
     # import numpy as np
     # from astropy.io import fits

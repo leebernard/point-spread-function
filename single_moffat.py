@@ -80,6 +80,8 @@ with fits.open(file_name) as hdu:
     data_im1 = hdu[1].data
     # bias subtraction
     bias_subtracted_im1 = bias_subtract(hdu[1])
+    gain = hdu[1].header['GAIN']  # retrieve gain in electrons/count
+    readnoise = hdu[1].header['RDNOISE']  # retrieve read noise, in e
 
 # first object
 # Centroid detection:
@@ -100,10 +102,19 @@ ymin = 1306
 ymax = 1356
 xmin = 1636
 xmax = 1706
-object1_data = bias_subtracted_im1[ymin:ymax, xmin:xmax]
+large_aperture = bias_subtracted_im1[ymin:ymax, xmin:xmax]
+
+# convert object to electron units from count
+large_aperture = large_aperture * gain
 
 # Background subtract the object
-object1_data, mask, background_dev = background_subtract(object1_data)
+large_aperture, mask, background_dev = background_subtract(large_aperture)
+
+# calculate the deviation on each pixel
+# defined as the sqrt of the sum of squares of pixel and background deviation
+# pixel deviation is defined as sqrt of pixel value in electrons
+# background deviation should include any read noise and bias noise
+
 
 # show an image of the aperture
 from astropy.visualization import SqrtStretch
@@ -115,13 +126,16 @@ norm = ImageNormalize(stretch=SqrtStretch())
 # plt.figure()
 f1, axisarg = plt.subplots(2, 1)
 
-axisarg[0].imshow(object1_data, norm=norm, origin='lower', cmap='viridis')
+axisarg[0].imshow(large_aperture, norm=norm, origin='lower', cmap='viridis')
 axisarg[1].imshow(mask, origin='lower', cmap='viridis')
 
 # plt.show()
 
+# slice this into a smaller aperture
+object1_data = large_aperture  # [11:37, 25:51]
+object1_dev = np.sqrt(object1_data + background_dev**2)
 
-def moffat_fit(indata):
+def moffat_fit(indata, dev=None):
     """wrapper for the moffat fit procedure.
 
     This fit is rather complicated, so it has been wrapped into a function for convience
@@ -165,7 +179,8 @@ def moffat_fit(indata):
     guess = [flux_guess, x_guess, y_guess, beta_guess, a_guess, b_guess, theta_guess, offset_guess]
 
     # generate parameters for fit
-    fit_result, fit_cov = curve_fit(flat_elliptical_Moffat, (x, y), indata.ravel(), p0=guess, bounds=bounds, method='trf')
+    fit_result, fit_cov = curve_fit(flat_elliptical_Moffat, (x, y), indata.ravel(), p0=guess, bounds=bounds,
+                                    sigma=dev.ravel(), method='trf')
 
     """Chi squared calculations
     """
@@ -198,25 +213,20 @@ def moffat_fit(indata):
 
 
 # do the fit
-m_fit, m_cov = moffat_fit(object1_data)
+m_fit, m_cov = moffat_fit(object1_data, dev=object1_dev)
 
-
+error = np.sqrt(np.diag(m_cov))
 print('Resultant parameters')
-print('Flux: ' + str(m_fit[0]))
-print('Center (x, y): '+str(m_fit[1]) + ', ' + str(m_fit[2]))
-print('beta: ' + str(m_fit[3]))
-print('x-axis eccentricity: ' + str(m_fit[4]))
-print('y-axis eccentricity: ' + str(m_fit[5]))
-print('angle of ecentricity: ' + str(m_fit[6]))
-print('background: ' + str(m_fit[7]))
+print(f'Flux: {m_fit[0]:.2f}±{error[0]:.2f}')
+print(f'Center (x, y): {m_fit[1]:.2f}±{error[1]:.2f}, {m_fit[2]:.2f}±{error[2]:.2f}')
+print(f'beta: {m_fit[3]:.2f}±{error[3]:.2f}')
+print(f'x-axis eccentricity: {m_fit[4]:.2f}±{error[4]:.2f}')
+print(f'y-axis eccentricity: {m_fit[5]:.2f}±{error[5]:.2f}')
+print(f'angle of eccentricity(Radians: {m_fit[6]:.3f}±{error[6]:.3f}')
+print(f'background: {m_fit[7]:.2f}±{error[7]:.2f}')
 
-error = np.sqrt(np.diag(m_cov))
-print('Relative Error on parameters')
-print(error/m_fit)
 
-error = np.sqrt(np.diag(m_cov))
-print('Error on parameters')
-print(error)
+
 
 # print('Covariance matrix, if that is interesting')
 # print(m_cov)
