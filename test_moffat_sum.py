@@ -26,7 +26,7 @@ def Moffat_sum(indata, flux1, flux2, alpha, beta1, beta2, x0, y0):
     return moffat_fun, moffat1, moffat2
 
 
-def moffat_fit(indata, guess=None, bounds=None):
+def moffat_fit(indata, guess=None, bounds=None, error=None):
     """wrapper for the moffat fit procedure.
 
     This fit is rather complicated, so it has been wrapped into a function for convience
@@ -55,7 +55,8 @@ def moffat_fit(indata, guess=None, bounds=None):
 
 
     # generate parameters for fit
-    fit, cov = curve_fit(flat_Moffat_sum, (x, y), indata.ravel(), p0=guess)
+    fit, cov = curve_fit(flat_Moffat_sum, (x, y), indata.ravel(), p0=guess, bounds=bounds, sigma=error.ravel(),
+                         absolute_sigma=True)
 
 
     """Chi squared calculations
@@ -65,14 +66,15 @@ def moffat_fit(indata, guess=None, bounds=None):
     m_input = (x, y)
     flux1 = fit[0]
     flux2 = fit[1]
-    alpha = fit[2]
+    alpha1 = fit[2]
     beta1 = fit[3]
     beta2 = fit[4]
     x0 = fit[5]
     y0 = fit[6]
+    # alpha2 = fit[7]
 
 
-    expected = flat_Moffat_sum(m_input, flux1, flux2, alpha, beta1, beta2, x0, y0)
+    expected = flat_Moffat_sum(m_input, flux1, flux2, alpha1, beta1, beta2, x0, y0)
 
     # calculated raw chi squared, including background noise
     chisq = sum(np.divide((observed - expected) ** 2, (expected + 0)))
@@ -99,27 +101,29 @@ x0 = 22
 y0 = 25
 flux1 = 80000
 flux2 = 20000
-alpha = 6
-beta1 = 7
-beta2 = 2
+alpha1 = 6
+beta1 = 9
+beta2 = 2.9
+# alpha2 = 5.5
 
-
-fake_object, fake_part1, fake_part2 = Moffat_sum(m_input, flux1, flux2, alpha, beta1, beta2, x0, y0)
+fake_object, fake_part1, fake_part2 = Moffat_sum(m_input, flux1, flux2, alpha1, beta1, beta2, x0, y0)
 
 # spike the object with some noise
-noise = np.random.normal(0,40,fake_object.shape)
+background_dev = 0
+noise = np.random.normal(0,background_dev,fake_object.shape)
 # fake_object = fake_object + noise
 
 # make a fit #######
-
+fake_object_err = np.sqrt(fake_object + background_dev**2)
 # generate a best guess
 y_guess = fake_object.shape[0] / 2
 x_guess = fake_object.shape[1] / 2
-flux1_guess = np.amax(fake_object)
-flux2_guess = flux1_guess
+flux1_guess = np.sum(fake_object)*.8
+flux2_guess = np.sum(fake_object)*.2
 beta1_guess = 7
-beta2_guess = 1.5
+beta2_guess = 2
 alpha_guess = 4
+
 
 guess = [flux1_guess, flux2_guess, alpha_guess, beta1_guess, beta2_guess, x_guess, y_guess]
 
@@ -132,7 +136,7 @@ beta1_bound = [1, 20]
 beta2_bound = [1, 20]
 x_bound = [0, object1_data.shape[1]]
 y_bound = [0, object1_data.shape[0]]
-
+# alpha2_bound = [.1, 20]
 """
 # format the bounds
 lower_bounds = [0, 0, 0.1, 1, 1, 0, 0]
@@ -140,20 +144,20 @@ upper_bounds = [np.inf, np.inf, 20, 20, 20, fake_object.shape[1], fake_object.sh
 
 bounds = (lower_bounds, upper_bounds)  # bounds set as pair of array-like tuples
 
-m_fit, m_cov = moffat_fit(fake_object, guess=guess, bounds=bounds)
+m_fit, m_cov = moffat_fit(fake_object, guess=guess, bounds=bounds, error=fake_object_err)
 
 # calculate errors
-error = np.sqrt(np.diag(m_cov))
+fit_error = np.sqrt(np.diag(m_cov))
 print('Resultant parameters')
 
-print(f'flux1: {m_fit[0]: .2f}±{error[0]:.2f} (Actual: {flux1})')
-print(f'flux2: {m_fit[1]: .2f}±{error[1]:.2f} (Actual: {flux2})')
-print(f'alpha: {m_fit[2]: .2f}±{error[2]:.2f} (Actual: {alpha})')
-# print(f'alpha2: {m_fit[3]: .2f}±{error[3]:.2f} (Actual: {alpha2})')
-print(f'beta1: {m_fit[3]: .2f}±{error[3]:.2f} (Actual: {beta1})')
-print(f'beta2: {m_fit[4]: .2f}±{error[4]:.2f} (Actual: {beta2})')
-print(f'x0: {m_fit[5]: .2f}±{error[5]:.2f} (Actual: {x0})')
-print(f'y0: {m_fit[6]: .2f}±{error[6]:.2f} (Actual: {y0})')
+print(f'flux1: {m_fit[0]: .2f}±{fit_error[0]:.2f} (Actual: {flux1})')
+print(f'flux2: {m_fit[1]: .2f}±{fit_error[1]:.2f} (Actual: {flux2})')
+print(f'alpha1: {m_fit[2]: .2f}±{fit_error[2]:.2f} (Actual: {alpha1})')
+# print(f'alpha2: {m_fit[7]: .2f}±{fit_error[7]:.2f} (Actual: {alpha2})')
+print(f'beta1: {m_fit[3]: .2f}±{fit_error[3]:.2f} (Actual: {beta1})')
+print(f'beta2: {m_fit[4]: .2f}±{fit_error[4]:.2f} (Actual: {beta2})')
+print(f'x0: {m_fit[5]: .2f}±{fit_error[5]:.2f} (Actual: {x0})')
+print(f'y0: {m_fit[6]: .2f}±{fit_error[6]:.2f} (Actual: {y0})')
 # f', starting guess: {flux1_guess})')
 # f', starting guess: {flux2_guess})')
 # f', starting guess: {alpha_guess})')
@@ -167,14 +171,14 @@ print(f'y0: {m_fit[6]: .2f}±{error[6]:.2f} (Actual: {y0})')
 # print the errors
 #
 # print('Relative Error on parameters')
-# print(str(error/m_fit))
+# print(str(fit_error/m_fit))
 
 
 # generate a plot of fit results
 rflux1 = m_fit[0]
 rflux2 = m_fit[1]
 ralpha = m_fit[2]
-# ralpha2 = m_fit[3]
+# ralpha2 = m_fit[7]
 rbeta1 = m_fit[3]
 rbeta2 = m_fit[4]
 rx0 = m_fit[5]

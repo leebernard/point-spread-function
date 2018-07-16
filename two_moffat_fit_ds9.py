@@ -77,13 +77,14 @@ for region in selected_regions:
 
 """calculate the centroid for each aperture"""
 
-
-
+n = 0  # counting variable
 # generate each curve fit
 from scipy.optimize import curve_fit
 for aperture in aperture_list:
 
     print('---------------------')
+    print('Region ' + str(n) + ': ' + selected_regions[n].region_def)
+    n += 1
     # background subtract the aperture
     aperture, mask, background_dev = background_subtract(aperture)
 
@@ -102,7 +103,21 @@ for aperture in aperture_list:
     axisarg[1][1].set_title('Object histogram after background subtraction')
 
     # create bounds for the fit, in an attempt to keep it from blowing up
+    """
+    flux1_bound = [0, np.inf]
+    flux2_bound = [0, np.inf]
+    alpha_bound = [0.1, 20]
+    beta1_bound = [1, 20]
+    beta2_bound = [1, 20]
+    x_bound = [0, object1_data.shape[1]]
+    y_bound = [0, object1_data.shape[0]]
+    # alpha2_bound = [.1, 20]
+    """
+    # format the bounds
+    lower_bounds = [0, 0, 0.1, 1, 1, 0, 0]
+    upper_bounds = [np.inf, np.inf, 20, 20, 20, aperture.shape[1], aperture.shape[0]]
 
+    bounds = (lower_bounds, upper_bounds)  # bounds set as pair of array-like tuples
 
     # generate a best guess
     y_guess = aperture.shape[0] / 2
@@ -123,7 +138,8 @@ for aperture in aperture_list:
 
     # curve fit
     try:
-        m_fit, m_cov = curve_fit(flat_Moffat_sum, (x, y), aperture.ravel(), sigma=aperture_err.ravel(), p0=guess)
+        m_fit, m_cov = curve_fit(flat_Moffat_sum, (x, y), aperture.ravel(), sigma=aperture_err.ravel(), p0=guess,
+                                 bounds=bounds, absolute_sigma=True)
 
     except RuntimeError:
         print('Unable to find fit.')
@@ -150,8 +166,6 @@ for aperture in aperture_list:
         result_difference = aperture - result
 
 
-
-        """Chi squared calculations"""
         """Chi squared calculations
         """
         observed = aperture.ravel()
