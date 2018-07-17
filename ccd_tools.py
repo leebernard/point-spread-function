@@ -1,14 +1,15 @@
 
 
-
-def bias_subtract(HDU):  # pass header data unit.  REMEBER, this is pass-by-reference
+def bias_subtract(HDU, bias_sec=None):  # pass header data unit.  REMEBER, this is pass-by-reference
     """Takes a header data unit, find the bias data from BIASSEC, and performs bias calculations and subtraction.
 
     Parameters
     ----------
     HDU : fits header data unit
         Image data stored in a fits file
-
+    bias_sec : tuple int, optional
+        defines the area of the frame to be used to calculate the bias. If not specified, determines the bias from the
+        header definition
     Returns
     -------
     output_im : numpy array
@@ -24,26 +25,28 @@ def bias_subtract(HDU):  # pass header data unit.  REMEBER, this is pass-by-refe
     # Store the data from the HDU argument
     im_data = HDU.data
 
-    # pull the bias section information
-    Bias_Sec = HDU.header['BIASSEC']
-    print('Bias Section is ' + Bias_Sec)
-    # print(type(Bias_Sec))
-    # slice the string, for converting to int
-    pattern = re.compile('\d+')  # pattern for all decimal digits
-    print(pattern.findall(Bias_Sec))
+    # check if parameters give the bias section, if not, automatically get it
+    if not bias_sec:
+        # pull the bias section information from the header readout.
+        Bias_Sec = HDU.header['BIASSEC']
+        print('Bias Section is ' + Bias_Sec)
+        # print(type(Bias_Sec))
+        # slice the string, for converting to int
+        pattern = re.compile('\d+')  # pattern for all decimal digits
+        print(pattern.findall(Bias_Sec))
 
-    # hold the result in an object
-    match = pattern.findall(Bias_Sec)
+        # hold the result in an object
+        bias_sec = pattern.findall(Bias_Sec)
 
-    # Bias section data from the header readout.
+    # Bias section data
     # image is not indexed the same as python.
     # Image indexes (x,y), from lower left
     # python indexes (y,x)
 
-    xmin = int(match[0])
-    xmax = int(match[1])
-    ymin = int(match[2])
-    ymax = int(match[3])
+    xmin = int(bias_sec[0])
+    xmax = int(bias_sec[1])
+    ymin = int(bias_sec[2])
+    ymax = int(bias_sec[3])
 
     bias_data = im_data[ymin:ymax, xmin:xmax]
 
@@ -74,6 +77,8 @@ def background_subtract(im_data):
         The background subtracted data.
     mask: numpy array bool
         The mask used to shield the object
+    std: float
+        The standard deviation on the background
     """
     # import numpy as np
     # from astropy.io import fits
@@ -95,12 +100,12 @@ def background_subtract(im_data):
 
     output_im = im_data - mean
 
-    return output_im, mask
+    return output_im, mask, std
 
 
 
 def get_regions(get_data=True):
-    """a function for parsing the region info pulled from SAOImage DS9 by pyds9's access routines.
+    """a function for importing the region info from SAOImage DS9 by pyds9's access routines.
 
     Each object has the DS9 canonical definition of the region, the array indices of the region, and the region data
     for memory/runtime management concerns, the region data feature can be suppressed by setting the optional argument
@@ -159,7 +164,6 @@ def get_regions(get_data=True):
 
     # frame_name = 'current frame'
 
-
     class Region:
         """
         This class is for convenient packaging of the region data.
@@ -175,13 +179,13 @@ def get_regions(get_data=True):
 
         Attributes
         ----------
-        x_coord: int
+        x_coord: float
             x coordinate of the region center
-        y_coord: int
+        y_coord: float
             y coordinate of the region center
-        width: int
+        width: float
             width of the region
-        height: int
+        height: float
             height of the region
         xmin: int
             x coordinate of the lower left corner
@@ -204,7 +208,7 @@ def get_regions(get_data=True):
 
     # parse the meta data string
     # pattern is all sequences of digits that are terminated by a period
-    pattern = re.compile('\d+(?=\.)') #(?<!\.)
+    pattern = re.compile('\d+\.?\d*')
 
     # The list for holding the region data. This is returned
     regions = []
@@ -225,10 +229,10 @@ def get_regions(get_data=True):
             current_region.system = region_system
 
             # region definition: orgin is lower left, given as x and y coord, with a width and a height
-            x_coord = int(region_def[0])
-            y_coord = int(region_def[1])
-            width = int(region_def[2])
-            height = int(region_def[3])
+            x_coord = float(region_def[0])
+            y_coord = float(region_def[1])
+            width = float(region_def[2])
+            height = float(region_def[3])
 
             # region slicing data
             xmin = int(x_coord - width/2)
