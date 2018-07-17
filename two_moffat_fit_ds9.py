@@ -13,7 +13,7 @@ from astropy.visualization.mpl_normalize import ImageNormalize
 from ccd_tools import bias_subtract, background_subtract, get_regions
 
 
-
+'''
 def Moffat_sum(indata, flux1, flux2, alpha, beta1, beta2, x0, y0):
     x, y = indata
     normalize1 = (beta1-1)/(np.pi*alpha**2)
@@ -36,6 +36,107 @@ def flat_Moffat_sum(indata, flux1, flux2, alpha, beta1, beta2, x0, y0):
     moffat_fun = moffat1 + moffat2
 
     return moffat_fun.ravel()
+'''
+
+def elliptical_moffat_sum(indata, flux1, flux2, a, b, beta1, beta2, x0, y0, theta):
+    """Model of PSF using a single Moffat distribution, with elliptical parameters.
+
+    Includes a parameter for axial alignment.
+
+    """
+    x_in, y_in = indata
+
+    # moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2))**(-beta)
+    A = np.cos(theta)**2/a**2 + np.sin(theta)**2/b**2
+    B = 2*np.cos(theta)*np.sin(theta)*(1/a**2 - 1/b**2)
+    C = np.sin(theta)**2/a**2 + np.cos(theta)**2/b**2
+
+    def moffat1(x, y): return (1 + A*(x - x0)**2 + B*(x - x0)*(y - y0) + C*(y - y0)**2)**(-beta1)
+
+    def moffat2(x, y): return (1 + A*(x - x0)**2 + B*(x - x0)*(y - y0) + C*(y - y0)**2)**(-beta2)
+
+
+    # numerical normalization
+    # scale steps according to the size of the array.
+    # produces step size of 1/10 of a pixel
+
+    x_final = np.amax(x_in) + 20
+    y_final = np.amax(y_in) + 20
+    x_start = np.amin(x_in) - 20
+    y_start = np.amin(y_in) - 20
+    # delta_x = .1
+    # delta_y = .1
+
+    h = 300
+    k = 300
+
+    delta_x = (x_final-x_start)/h
+    delta_y = (y_final-y_start)/k
+
+    # create a grid of x and y inputs
+    x_step, y_step = np.meshgrid(np.arange(x_start + delta_x/2, x_final + delta_x/2, delta_x), np.arange(y_start + delta_y/2, y_final + delta_y/2, delta_y))
+
+    # sum up the function evaluated at the steps, and multiply by the area of each step
+    normalize1 = np.sum(moffat1(x_step, y_step))*delta_x*delta_y
+    normalize2 = np.sum(moffat2(x_step, y_step))*delta_x*delta_y
+
+    # forget that, just integrate it
+    # normalize, norm_err = dblquad(moffat_fun, -np.inf, np.inf, lambda x: -np.inf, lambda x: np.inf)
+
+    output = flux1*moffat1(x_in, y_in)/normalize1 + flux2*moffat2(x_in, y_in)/normalize2
+    output1 = flux1*moffat1(x_in, y_in)/normalize1
+    output2 = flux2*moffat2(x_in, y_in)/normalize2
+
+    return output, output1, output2
+
+
+def flat_elliptical_moffat_sum(indata, flux1, flux2, a, b, beta1, beta2, x0, y0, theta):
+    """Model of PSF using a single Moffat distribution, with elliptical parameters.
+
+    Includes a parameter for axial alignment.
+
+    """
+    x_in, y_in = indata
+
+    A = np.cos(theta)**2/a**2 + np.sin(theta)**2/b**2
+    B = 2*np.cos(theta)*np.sin(theta)*(1/a**2 - 1/b**2)
+    C = np.sin(theta)**2/a**2 + np.cos(theta)**2/b**2
+
+    def moffat1(x, y): return (1 + A*(x - x0)**2 + B*(x - x0)*(y - y0) + C*(y - y0)**2)**(-beta1)
+
+    def moffat2(x, y): return (1 + A*(x - x0)**2 + B*(x - x0)*(y - y0) + C*(y - y0)**2)**(-beta2)
+
+
+    # numerical normalization
+    # scale steps according to the size of the array.
+    # produces step size of 1/10 of a pixel
+
+    x_final = np.amax(x_in) + 20
+    y_final = np.amax(y_in) + 20
+    x_start = np.amin(x_in) - 20
+    y_start = np.amin(y_in) - 20
+    # delta_x = .1
+    # delta_y = .1
+
+    h = 300
+    k = 300
+
+    delta_x = (x_final-x_start)/h
+    delta_y = (y_final-y_start)/k
+
+    # create a grid of x and y inputs
+    x_step, y_step = np.meshgrid(np.arange(x_start + delta_x/2, x_final + delta_x/2, delta_x), np.arange(y_start + delta_y/2, y_final + delta_y/2, delta_y))
+
+    # sum up the function evaluated at the steps, and multiply by the area of each step
+    normalize1 = np.sum(moffat1(x_step, y_step))*delta_x*delta_y
+    normalize2 = np.sum(moffat2(x_step, y_step))*delta_x*delta_y
+
+    # forget that, just integrate it
+    # normalize, norm_err = dblquad(moffat_fun, -np.inf, np.inf, lambda x: -np.inf, lambda x: np.inf)
+
+    output = flux1*moffat1(x_in, y_in)/normalize1 + flux2*moffat2(x_in, y_in)/normalize2
+
+    return output.ravel()
 
 
 # check if ds9 is accesible
@@ -106,16 +207,17 @@ for aperture in aperture_list:
     """
     flux1_bound = [0, np.inf]
     flux2_bound = [0, np.inf]
-    alpha_bound = [0.1, 20]
+    a_bound = [0.1, 20]
+    b_bound = [0.1, 20
     beta1_bound = [1, 20]
     beta2_bound = [1, 20]
     x_bound = [0, object1_data.shape[1]]
     y_bound = [0, object1_data.shape[0]]
-    # alpha2_bound = [.1, 20]
+    theta_bound = [0, np.pi/2]
     """
     # format the bounds
-    lower_bounds = [0, 0, 0.1, 1, 1, 0, 0]
-    upper_bounds = [np.inf, np.inf, 20, 20, 20, aperture.shape[1], aperture.shape[0]]
+    lower_bounds = [0, 0, 0.1, .1, 1, 1, 0, 0, 0]
+    upper_bounds = [np.inf, np.inf, 20, 20, 20, 20, aperture.shape[1], aperture.shape[0], np.pi / 2]
 
     bounds = (lower_bounds, upper_bounds)  # bounds set as pair of array-like tuples
 
@@ -126,9 +228,11 @@ for aperture in aperture_list:
     flux2_guess = np.sum(aperture)*0.2
     beta1_guess = 7
     beta2_guess = 2
-    alpha_guess = 4
+    a_guess = 4
+    b_guess = 4
+    theta_guess = 0
 
-    guess = [flux1_guess, flux2_guess, alpha_guess, beta1_guess, beta2_guess, x_guess, y_guess]
+    guess = [flux1_guess, flux2_guess, a_guess, b_guess, beta1_guess, beta2_guess, x_guess, y_guess, theta_guess]
 
     # indexes of the apature, remembering that python indexes vert, horz
     y = np.arange(aperture.shape[0])
@@ -138,7 +242,7 @@ for aperture in aperture_list:
 
     # curve fit
     try:
-        m_fit, m_cov = curve_fit(flat_Moffat_sum, (x, y), aperture.ravel(), sigma=aperture_err.ravel(), p0=guess,
+        m_fit, m_cov = curve_fit(flat_elliptical_moffat_sum, (x, y), aperture.ravel(), sigma=aperture_err.ravel(), p0=guess,
                                  bounds=bounds, absolute_sigma=True)
 
     except RuntimeError:
@@ -146,7 +250,7 @@ for aperture in aperture_list:
         axisarg[0][1].set_title('Fit not found within parameter bounds')
     else:
 
-        error = np.sqrt(np.diag(m_cov))
+        fit_error = np.sqrt(np.diag(m_cov))
         # print('Error on parameters')
         # print(error)
 
@@ -154,13 +258,15 @@ for aperture in aperture_list:
         # generate a plot of fit results
         rflux1 = m_fit[0]
         rflux2 = m_fit[1]
-        ralpha = m_fit[2]
-        rbeta1 = m_fit[3]
-        rbeta2 = m_fit[4]
-        rx0 = m_fit[5]
-        ry0 = m_fit[6]
+        ra = m_fit[2]
+        rb= m_fit[3]
+        rbeta1 = m_fit[4]
+        rbeta2 = m_fit[5]
+        rx0 = m_fit[6]
+        ry0 = m_fit[7]
+        rtheta = m_fit[8]
 
-        result, result_part1, result_part2 = Moffat_sum((x, y), rflux1, rflux2, ralpha, rbeta1, rbeta2, rx0, ry0)
+        result, result_part1, result_part2 = elliptical_moffat_sum((x, y), rflux1, rflux2, ra, rb, rbeta1, rbeta2, rx0, ry0, rtheta)
 
         # calculate the difference between the obersved and the result fro mthe fit
         result_difference = aperture - result
@@ -170,16 +276,9 @@ for aperture in aperture_list:
         """
         observed = aperture.ravel()
 
-        m_input = (x, y)
-        flux1 = result[0]
-        flux2 = result[1]
-        alpha = result[2]
-        beta1 = result[3]
-        beta2 = result[4]
-        x0 = result[5]
-        y0 = result[6]
+        # generate a plot of fit results
 
-        expected = flat_Moffat_sum(m_input, flux1, flux2, alpha, beta1, beta2, x0, y0)
+        expected = flat_elliptical_moffat_sum((x, y), rflux1, rflux2, ra, rb, rbeta1, rbeta2, rx0, ry0, rtheta)
 
         # calculated raw chi squared, including background noise
         chisq = sum(np.divide((observed - expected) ** 2, (expected + background_dev**2)))
@@ -191,13 +290,15 @@ for aperture in aperture_list:
         chisq_norm = chisq / degrees_of_freedom
 
         #print the results
-        print('Resultant parameters')
-        print(f'Flux1: {rflux1:.2f} ± {error[0]:.2f}')
-        print(f'Flux2: {rflux2:.2f} ± {error[1]:.2f}')
-        print(f'Center (x, y): {rx0:.2f} ± {error[5]:.2f}, {ry0:.2f} ± {error[6]:.2f}')
-        print(f'alpha: {ralpha:.2f} ± {error[2]:.2f}')
-        print(f'beta1: {rbeta1:.2f} ± {error[3]:.2f}')
-        print(f'beta2: {rbeta2:.2f} ± {error[4]:.2f}')
+        print(f'flux1: {m_fit[0]: .2f}±{fit_error[0]:.2f}')
+        print(f'flux2: {m_fit[1]: .2f}±{fit_error[1]:.2f}')
+        print(f'a: {m_fit[2]: .2f}±{fit_error[2]:.2f}')
+        print(f'b: {m_fit[3]: .2f}±{fit_error[3]:.2f}')
+        print(f'beta1: {m_fit[4]: .2f}±{fit_error[4]:.2f}')
+        print(f'beta2: {m_fit[5]: .2f}±{fit_error[5]:.2f}')
+        print(f'x0: {m_fit[6]: .2f}±{fit_error[6]:.2f}')
+        print(f'y0: {m_fit[7]: .2f}±{fit_error[7]:.2f}')
+        print(f'theta: {m_fit[8]: .2f}±{fit_error[8]:.2f}')
 
         print('Normalized chi squared: ')
         print(chisq_norm)
