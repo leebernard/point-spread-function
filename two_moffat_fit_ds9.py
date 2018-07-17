@@ -184,7 +184,7 @@ from scipy.optimize import curve_fit
 for aperture in aperture_list:
 
     print('---------------------')
-    print('Region ' + str(n) + ': ' + selected_regions[n].region_def)
+    print('Region ' + str(n+1) + ': ' + selected_regions[n].region_def)
     n += 1
     # background subtract the aperture
     aperture, mask, background_dev = background_subtract(aperture)
