@@ -9,6 +9,8 @@ from astropy.io import fits
 import pyds9
 from astropy.visualization import SqrtStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
+from scipy.optimize import curve_fit
+
 # import needed functions from the toolbox
 from ccd_tools import bias_subtract, background_subtract, get_regions
 
@@ -37,6 +39,20 @@ def flat_Moffat_sum(indata, flux1, flux2, alpha, beta1, beta2, x0, y0):
 
     return moffat_fun.ravel()
 '''
+def cov_to_coeff(cov):
+    """This function converts a covarience matrix to a correlation coefficient matrix
+
+    It does so by normalizing each entry in the matrix by the product of the deviations of the relevent """
+    # make a copy of the covarience array
+    coeff = np.copy(cov)
+
+    it = np.nditer(coeff, flags=['multi_index'], op_flags=['writeonly'])
+    while not it.finished:
+        it[0] = it[0]/(np.sqrt(cov[it.multi_index[0], it.multi_index[0]]) * np.sqrt(cov[it.multi_index[1], it.multi_index[1]]))
+        it.iternext()
+
+    return coeff
+
 
 def elliptical_moffat_sum(indata, flux1, flux2, a, b, beta1, beta2, x0, y0, theta):
     """Model of PSF using a single Moffat distribution, with elliptical parameters.
@@ -165,8 +181,7 @@ selected_regions.sort(key=lambda region: np.sqrt(region.x_coord**2 + region.y_co
 bias_subtracted_data = bias_subtract(hdu[0])
 gain = hdu[0].header['GAIN']
 
-# use the regions to produce apertures of thedata
-# also background subtract the data
+# use the regions to produce apertures of the data
 aperture_list = []  # list for holding aperture data
 for region in selected_regions:
     current_aperture = bias_subtracted_data[region.ymin:region.ymax, region.xmin:region.xmax]
@@ -178,9 +193,14 @@ for region in selected_regions:
 
 """calculate the centroid for each aperture"""
 
-n = 0  # counting variable
+n = 0  # counting variable. Not pythonic, but w/e
+
+# variables for holding the results
+alpha_results = []
+beta1_results = []
+beta2_results = []
 # generate each curve fit
-from scipy.optimize import curve_fit
+
 for aperture in aperture_list:
 
     print('---------------------')
@@ -228,8 +248,8 @@ for aperture in aperture_list:
     flux2_guess = np.sum(aperture)*0.2
     beta1_guess = 7
     beta2_guess = 2
-    a_guess = 4
-    b_guess = 4
+    a_guess = 6
+    b_guess = 6
     theta_guess = 0
 
     guess = [flux1_guess, flux2_guess, a_guess, b_guess, beta1_guess, beta2_guess, x_guess, y_guess, theta_guess]
@@ -250,16 +270,16 @@ for aperture in aperture_list:
         axisarg[0][1].set_title('Fit not found within parameter bounds')
     else:
 
+        # calculate error on parameters
         fit_error = np.sqrt(np.diag(m_cov))
-        # print('Error on parameters')
-        # print(error)
-
+        # calculate percent error
+        pct_error = fit_error/m_fit * 100
 
         # generate a plot of fit results
         rflux1 = m_fit[0]
         rflux2 = m_fit[1]
         ra = m_fit[2]
-        rb= m_fit[3]
+        rb = m_fit[3]
         rbeta1 = m_fit[4]
         rbeta2 = m_fit[5]
         rx0 = m_fit[6]
@@ -278,7 +298,7 @@ for aperture in aperture_list:
 
         # generate a plot of fit results
 
-        expected = flat_elliptical_moffat_sum((x, y), rflux1, rflux2, ra, rb, rbeta1, rbeta2, rx0, ry0, rtheta)
+        expected = result.ravel()
 
         # calculated raw chi squared, including background noise
         chisq = sum(np.divide((observed - expected) ** 2, (expected + background_dev**2)))
@@ -290,15 +310,15 @@ for aperture in aperture_list:
         chisq_norm = chisq / degrees_of_freedom
 
         #print the results
-        print(f'flux1: {m_fit[0]: .2f}±{fit_error[0]:.2f}')
-        print(f'flux2: {m_fit[1]: .2f}±{fit_error[1]:.2f}')
-        print(f'a: {m_fit[2]: .2f}±{fit_error[2]:.2f}')
-        print(f'b: {m_fit[3]: .2f}±{fit_error[3]:.2f}')
-        print(f'beta1: {m_fit[4]: .2f}±{fit_error[4]:.2f}')
-        print(f'beta2: {m_fit[5]: .2f}±{fit_error[5]:.2f}')
-        print(f'x0: {m_fit[6]: .2f}±{fit_error[6]:.2f}')
-        print(f'y0: {m_fit[7]: .2f}±{fit_error[7]:.2f}')
-        print(f'theta: {m_fit[8]: .2f}±{fit_error[8]:.2f}')
+        print(f'flux1: {m_fit[0]: .2f}±{fit_error[0]:.2f} ({pct_error[0]: .2f}%)')
+        print(f'flux2: {m_fit[1]: .2f}±{fit_error[1]:.2f} ({pct_error[1]: .2f}%)')
+        print(f'a: {m_fit[2]: .2f}±{fit_error[2]:.2f} ({pct_error[2]: .2f}%)')
+        print(f'b: {m_fit[3]: .2f}±{fit_error[3]:.2f} ({pct_error[3]: .2f}%)')
+        print(f'beta1: {m_fit[4]: .2f}±{fit_error[4]:.2f} ({pct_error[4]: .2f}%)')
+        print(f'beta2: {m_fit[5]: .2f}±{fit_error[5]:.2f} ({pct_error[5]: .2f}%)')
+        print(f'x0: {m_fit[6]: .2f}±{fit_error[6]:.2f} ({pct_error[6]: .2f}%)')
+        print(f'y0: {m_fit[7]: .2f}±{fit_error[7]:.2f} ({pct_error[7]: .2f}%)')
+        print(f'theta: {m_fit[8]: .2f}±{fit_error[8]:.2f} ({pct_error[8]: .2f}%)')
 
         print('Normalized chi squared: ')
         print(chisq_norm)
@@ -319,3 +339,14 @@ for aperture in aperture_list:
 
 
 plt.show()
+
+# routine for saving the aperture data
+# filename = '/home/lee/Documents/aperture-data'
+# np.savez(filename, aperture_list)
+#
+# with np.load(filename) as archive:
+#       keylist = archive.files
+#       for key in keylist:
+#           current_aperture = archive[key]
+#           aperture_list.append(current_aperture)
+
