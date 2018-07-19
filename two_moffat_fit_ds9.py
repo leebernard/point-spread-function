@@ -4,6 +4,7 @@
 import numpy as np
 # import matplotlib
 import matplotlib.pyplot as plt
+import pickle
 # import re
 from astropy.io import fits
 import pyds9
@@ -183,9 +184,10 @@ gain = hdu[0].header['GAIN']
 
 # use the regions to produce apertures of the data
 aperture_list = []  # list for holding aperture data
+lower_left = []
 for region in selected_regions:
     current_aperture = bias_subtracted_data[region.ymin:region.ymax, region.xmin:region.xmax]
-
+    lower_left.append([region.ymin, region.xmin])
     # convert to electron count
     current_aperture = current_aperture*gain
     aperture_list.append(current_aperture)
@@ -196,9 +198,12 @@ for region in selected_regions:
 n = 0  # counting variable. Not pythonic, but w/e
 
 # variables for holding the results
-alpha_results = []
-beta1_results = []
-beta2_results = []
+background_results = [] # holds background, dev
+aperture_data = []
+fit_results = []
+fit_cov = []
+
+
 # generate each curve fit
 
 for aperture in aperture_list:
@@ -207,7 +212,9 @@ for aperture in aperture_list:
     print('Region ' + str(n+1) + ': ' + selected_regions[n].region_def)
     n += 1
     # background subtract the aperture
-    aperture, mask, background_dev = background_subtract(aperture)
+    background_value, mask, background_dev = background_subtract(aperture)
+    aperture = aperture - background_value
+
 
     # generate the associated pixel error
     aperture_err = np.sqrt(aperture + background_dev**2)
@@ -268,12 +275,20 @@ for aperture in aperture_list:
     except RuntimeError:
         print('Unable to find fit.')
         axisarg[0][1].set_title('Fit not found within parameter bounds')
+        del lower_left[n-1] # remove the lower left location that failed
     else:
 
         # calculate error on parameters
         fit_error = np.sqrt(np.diag(m_cov))
         # calculate percent error
         pct_error = fit_error/m_fit * 100
+
+        # save the results
+        background_results.append([background_value, background_dev])
+        aperture_data.append(aperture)
+        fit_results.append(m_fit)
+        fit_cov.append(m_cov)
+
 
         # generate a plot of fit results
         rflux = m_fit[0]
@@ -340,13 +355,19 @@ for aperture in aperture_list:
 
 plt.show()
 
-# routine for saving the aperture data
-# filename = '/home/lee/Documents/aperture-data'
-# np.savez(filename, aperture_list)
-#
-# with np.load(filename) as archive:
-#       keylist = archive.files
-#       for key in keylist:
-#           current_aperture = archive[key]
-#           aperture_list.append(current_aperture)
+# convert lower left values into a numpy array
+lower_left = np.asarray(lower_left)
 
+# pack the results as a dictionary
+archive = {'apertures': aperture_data, 'background': background_results, 'parameters': fit_results,
+           'param_cov': fit_cov, 'location': lower_left}
+
+# routine for saving the aperture data
+filename = '/home/lee/Documents/sample-archive-im16.pkl'
+
+with open(filename, mode='wb') as file:
+    pickle.dump(archive, file)
+
+# Loading procedure
+# with open(filename, mode='rb') as file:
+#     archive = pickle.load(file)

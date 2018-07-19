@@ -98,7 +98,7 @@ def background_subtract(im_data):
     print('Background median: ' + str(median))
     print('Background standerd deviation: ' + str(std))
 
-    output_im = im_data - mean
+    output_im = mean
 
     return output_im, mask, std
 
