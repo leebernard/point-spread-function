@@ -54,7 +54,7 @@ def cov_to_coeff(cov):
     return coeff
 
 
-def elliptical_moffat_sum(indata, flux1, flux2, a, b, beta1, beta2, x0, y0, theta):
+def elliptical_moffat_sum(indata, flux, p, a, b, beta1, beta2, x0, y0, theta):
     """Model of PSF using a single Moffat distribution, with elliptical parameters.
 
     Includes a parameter for axial alignment.
@@ -99,14 +99,14 @@ def elliptical_moffat_sum(indata, flux1, flux2, a, b, beta1, beta2, x0, y0, thet
     # forget that, just integrate it
     # normalize, norm_err = dblquad(moffat_fun, -np.inf, np.inf, lambda x: -np.inf, lambda x: np.inf)
 
-    output = flux1*moffat1(x_in, y_in)/normalize1 + flux2*moffat2(x_in, y_in)/normalize2
-    output1 = flux1*moffat1(x_in, y_in)/normalize1
-    output2 = flux2*moffat2(x_in, y_in)/normalize2
+    output = flux*p*moffat1(x_in, y_in)/normalize1 + flux*(1-p)*moffat2(x_in, y_in)/normalize2
+    output1 = flux*p*moffat1(x_in, y_in)/normalize1
+    output2 = flux*(1-p)*moffat2(x_in, y_in)/normalize2
 
     return output, output1, output2
 
 
-def flat_elliptical_moffat_sum(indata, flux1, flux2, a, b, beta1, beta2, x0, y0, theta):
+def flat_elliptical_moffat_sum(indata, flux, p, a, b, beta1, beta2, x0, y0, theta):
     """Model of PSF using a single Moffat distribution, with elliptical parameters.
 
     Includes a parameter for axial alignment.
@@ -150,7 +150,7 @@ def flat_elliptical_moffat_sum(indata, flux1, flux2, a, b, beta1, beta2, x0, y0,
     # forget that, just integrate it
     # normalize, norm_err = dblquad(moffat_fun, -np.inf, np.inf, lambda x: -np.inf, lambda x: np.inf)
 
-    output = flux1*moffat1(x_in, y_in)/normalize1 + flux2*moffat2(x_in, y_in)/normalize2
+    output = flux*p*moffat1(x_in, y_in)/normalize1 + flux*(1-p)*moffat2(x_in, y_in)/normalize2
 
     return output.ravel()
 
@@ -225,8 +225,8 @@ for aperture in aperture_list:
 
     # create bounds for the fit, in an attempt to keep it from blowing up
     """
-    flux1_bound = [0, np.inf]
-    flux2_bound = [0, np.inf]
+    flux_bound = [0, np.inf]
+    p_bound = [0, 1]
     a_bound = [0.1, 20]
     b_bound = [0.1, 20
     beta1_bound = [1, 20]
@@ -237,22 +237,22 @@ for aperture in aperture_list:
     """
     # format the bounds
     lower_bounds = [0, 0, 0.1, .1, 1, 1, 0, 0, 0]
-    upper_bounds = [np.inf, np.inf, 20, 20, 20, 20, aperture.shape[1], aperture.shape[0], np.pi / 2]
+    upper_bounds = [np.inf, 1, 20, 20, 20, 20, aperture.shape[1], aperture.shape[0], np.pi / 2]
 
     bounds = (lower_bounds, upper_bounds)  # bounds set as pair of array-like tuples
 
     # generate a best guess
     y_guess = aperture.shape[0] / 2
     x_guess = aperture.shape[1] / 2
-    flux1_guess = np.sum(aperture)*0.8
-    flux2_guess = np.sum(aperture)*0.2
+    flux_guess = np.sum(aperture)
+    p_guess = .8
     beta1_guess = 7
     beta2_guess = 2
     a_guess = 6
     b_guess = 6
     theta_guess = 0
 
-    guess = [flux1_guess, flux2_guess, a_guess, b_guess, beta1_guess, beta2_guess, x_guess, y_guess, theta_guess]
+    guess = [flux_guess, p_guess, a_guess, b_guess, beta1_guess, beta2_guess, x_guess, y_guess, theta_guess]
 
     # indexes of the apature, remembering that python indexes vert, horz
     y = np.arange(aperture.shape[0])
@@ -276,8 +276,8 @@ for aperture in aperture_list:
         pct_error = fit_error/m_fit * 100
 
         # generate a plot of fit results
-        rflux1 = m_fit[0]
-        rflux2 = m_fit[1]
+        rflux = m_fit[0]
+        rp = m_fit[1]
         ra = m_fit[2]
         rb = m_fit[3]
         rbeta1 = m_fit[4]
@@ -286,7 +286,7 @@ for aperture in aperture_list:
         ry0 = m_fit[7]
         rtheta = m_fit[8]
 
-        result, result_part1, result_part2 = elliptical_moffat_sum((x, y), rflux1, rflux2, ra, rb, rbeta1, rbeta2, rx0, ry0, rtheta)
+        result, result_part1, result_part2 = elliptical_moffat_sum((x, y), rflux, rp, ra, rb, rbeta1, rbeta2, rx0, ry0, rtheta)
 
         # calculate the difference between the obersved and the result fro mthe fit
         result_difference = aperture - result
@@ -310,8 +310,8 @@ for aperture in aperture_list:
         chisq_norm = chisq / degrees_of_freedom
 
         #print the results
-        print(f'flux1: {m_fit[0]: .2f}±{fit_error[0]:.2f} ({pct_error[0]: .2f}%)')
-        print(f'flux2: {m_fit[1]: .2f}±{fit_error[1]:.2f} ({pct_error[1]: .2f}%)')
+        print(f'flux: {m_fit[0]: .2f}±{fit_error[0]:.2f} ({pct_error[0]: .2f}%)')
+        print(f'p: {m_fit[1]: .2f}±{fit_error[1]:.2f} ({pct_error[1]: .2f}%)')
         print(f'a: {m_fit[2]: .2f}±{fit_error[2]:.2f} ({pct_error[2]: .2f}%)')
         print(f'b: {m_fit[3]: .2f}±{fit_error[3]:.2f} ({pct_error[3]: .2f}%)')
         print(f'beta1: {m_fit[4]: .2f}±{fit_error[4]:.2f} ({pct_error[4]: .2f}%)')
