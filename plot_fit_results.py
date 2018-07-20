@@ -13,42 +13,56 @@ included, as well as the location of the lower left corner of each aperture
 
 """
 
-# load the data from Im1
-filename = '/home/lee/Documents/sample-archive-im16.pkl'
+# load the data
+filenames = ['/home/lee/Documents/sample-archive-im1.pkl']
 
-with open(filename, mode='rb') as file:
-    archive_im1 = pickle.load(file)
+filenames.append('/home/lee/Documents/sample-archive-im2.pkl')
+filenames.append('/home/lee/Documents/sample-archive-im4.pkl')
+filenames.append('/home/lee/Documents/sample-archive-im5.pkl')   
+filenames.append('/home/lee/Documents/sample-archive-im7.pkl')
+filenames.append('/home/lee/Documents/sample-archive-im9.pkl')
+filenames.append('/home/lee/Documents/sample-archive-im10.pkl')
+filenames.append('/home/lee/Documents/sample-archive-im12.pkl')
+filenames.append('/home/lee/Documents/sample-archive-im13.pkl')
+filenames.append('/home/lee/Documents/sample-archive-im16.pkl')
 
-apertures_im1 = archive_im1['apertures']
-parameters_im1 = archive_im1['parameters']
-cov_im1 = archive_im1['param_cov']
-
-# list to hold the deviations on the parameters
-error_im1 = []
-for cov_mat in cov_im1:
-    error_im1.append(np.sqrt(np.diag(cov_mat)))
-# convert to numpy array, for convience
-error_im1 = np.asarray(error_im1)
-
-# unpack the measured flux
-measured_flux_im1 = []
-for aperture in apertures_im1:
-    measured_flux_im1.append(np.sum(aperture))
-# convert to a numpy array. This is done later, to avoid unnecessary copying of arrays
-measured_flux_im1 = np.asarray(measured_flux_im1)
-
-# unpack the calculated flux
-calc_flux = []
-for parameter in parameters_im1:
-    calc_flux.append(parameter[0])
-# convert to numpy array
-calc_flux = np.asarray(calc_flux)
-
-flux_ratio = calc_flux/measured_flux_im1
-
-flux_ratio_dev = error_im1[:, 0]/measured_flux_im1
-
+# figure for ploting the flux ratios
 f1 = plt.figure()
-plt.errorbar(measured_flux_im1, flux_ratio, yerr=flux_ratio_dev, ls='None')
+
+for filename in filenames:
+    with open(filename, mode='rb') as file:
+        archive = pickle.load(file)
+
+
+    apertures = archive['apertures']
+    parameters = archive['parameters']
+    cov = archive['param_cov']
+    
+    # list to hold the deviations on the parameters
+    error = []
+    for cov_mat in cov:
+        error.append(np.sqrt(np.diag(cov_mat)))
+    # convert to numpy array, for convience
+    error = np.asarray(error)
+    
+    # unpack the measured flux
+    measured_flux = []
+    for aperture in apertures:
+        measured_flux.append(np.sum(aperture))
+    # convert to a numpy array. This is done later, to avoid unnecessary copying of arrays
+    measured_flux = np.asarray(measured_flux)
+    
+    # unpack the calculated flux
+    calc_flux = []
+    for parameter in parameters:
+        calc_flux.append(parameter[0])
+    # convert to numpy array
+    calc_flux = np.asarray(calc_flux)
+    
+    flux_ratio = calc_flux/measured_flux
+    
+    flux_ratio_dev = error[:, 0]/measured_flux
+
+    plt.errorbar(measured_flux, flux_ratio, yerr=flux_ratio_dev, ls='None', marker='o')
 
 
