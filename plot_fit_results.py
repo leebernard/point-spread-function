@@ -14,25 +14,29 @@ included, as well as the location of the lower left corner of each aperture
 """
 
 # load the data
-filenames = ['/home/lee/Documents/sample-archive-im1.pkl']
+filenames = []
 
+filenames.append('/home/lee/Documents/sample-archive-im1.pkl')
 filenames.append('/home/lee/Documents/sample-archive-im2.pkl')
 filenames.append('/home/lee/Documents/sample-archive-im4.pkl')
-filenames.append('/home/lee/Documents/sample-archive-im5.pkl')   
+filenames.append('/home/lee/Documents/sample-archive-im5.pkl')
 filenames.append('/home/lee/Documents/sample-archive-im7.pkl')
-filenames.append('/home/lee/Documents/sample-archive-im9.pkl')
-filenames.append('/home/lee/Documents/sample-archive-im10.pkl')
-filenames.append('/home/lee/Documents/sample-archive-im12.pkl')
-filenames.append('/home/lee/Documents/sample-archive-im13.pkl')
-filenames.append('/home/lee/Documents/sample-archive-im16.pkl')
+
+# filenames.append('/home/lee/Documents/sample-archive-im9.pkl')
+# filenames.append('/home/lee/Documents/sample-archive-im10.pkl')
+# filenames.append('/home/lee/Documents/sample-archive-im12.pkl')
+# filenames.append('/home/lee/Documents/sample-archive-im13.pkl')
+# filenames.append('/home/lee/Documents/sample-archive-im16.pkl')
 
 # figure for ploting the flux ratios
 f1 = plt.figure()
-
+# n = 0
 for filename in filenames:
     with open(filename, mode='rb') as file:
         archive = pickle.load(file)
 
+    # iterate counter
+    n += 1
 
     apertures = archive['apertures']
     parameters = archive['parameters']
@@ -63,10 +67,12 @@ for filename in filenames:
     
     flux_ratio_dev = error[:, 0]/measured_flux
 
-    plt.errorbar(measured_flux, flux_ratio, yerr=flux_ratio_dev, ls='None', marker='o')
+    labelstr = f'Frame {n}'
+    plt.errorbar(measured_flux, flux_ratio, yerr=flux_ratio_dev, ls='None', marker='o', capsize=2, label=labelstr)
 
 plt.xlabel('Measured Flux (e-)')
 plt.ylabel('Ratio of Flux parameter to Measured Flux')
 plt.legend(loc='best')
-
-
+plt.xlim(xmax=850000)
+plt.ylim(.90, 1.05)
+plt.show()
