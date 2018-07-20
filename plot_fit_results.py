@@ -65,4 +65,8 @@ for filename in filenames:
 
     plt.errorbar(measured_flux, flux_ratio, yerr=flux_ratio_dev, ls='None', marker='o')
 
+plt.xlabel('Measured Flux (e-)')
+plt.ylabel('Ratio of Flux parameter to Measured Flux')
+plt.legend(loc='best')
+
 
