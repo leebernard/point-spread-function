@@ -46,7 +46,15 @@ for n, filename in enumerate(filename_list):
         error_list.append(np.sqrt(np.diag(cov_mat)))
     # convert to numpy array, for convenience
     error_list = np.asarray(error_list)
+    # unpack the needed error
+    theta_dev = error_list[:, -1]
 
+    # unpack the theta values
+    theta = []
+    for parameter in parameters:
+        theta.append(parameter[-1])
+    # convert to numpy array
+    theta = np.asarray(theta)
 
     # unpack the measured flux
     measured_flux = []
@@ -55,23 +63,11 @@ for n, filename in enumerate(filename_list):
     # convert to a numpy array. This is done later, to avoid unnecessary copying of arrays
     measured_flux = np.asarray(measured_flux)
 
-    # unpack the calculated flux
-    calc_flux = []
-    for parameter in parameters:
-        calc_flux.append(parameter[0])
-    # convert to numpy array
-    calc_flux = np.asarray(calc_flux)
+    frame_number = n+1
+    labelstr = f'Frame {frame_number}'
 
-    flux_ratio = calc_flux/measured_flux
+    frame = np.ones(theta.size) * (n+1)
+    plt.errorbar(measured_flux, theta , yerr=theta_dev, ls='None', marker='o', capsize=2, label=labelstr)
 
-    flux_ratio_dev = error_list[:, 0]/measured_flux
 
-    labelstr = f'Frame {n}'
-    plt.errorbar(measured_flux, flux_ratio, yerr=flux_ratio_dev, ls='None', marker='o', capsize=2, label=labelstr)
 
-plt.xlabel('Measured Flux (e-)')
-plt.ylabel('Ratio of Flux parameter to Measured Flux')
-plt.legend(loc='best')
-plt.xlim(xmax=850000)
-plt.ylim(.90, 1.05)
-plt.show()
