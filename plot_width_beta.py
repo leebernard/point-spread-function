@@ -31,6 +31,7 @@ filename_list.append('/home/lee/Documents/sample-archive-im16.pkl')
 # figure for ploting the flux ratios
 alpha_fig = plt.figure('alpha values', figsize=(12, 10))
 beta_fig = plt.figure('beta values', figsize=(12,10))
+beta_ratio_fig = plt.figure('beta ratio', figsize=(12,10))
 beta_major_plot = beta_fig.add_subplot(211)
 beta_minor_plot = beta_fig.add_subplot(212)
 
@@ -45,15 +46,19 @@ for n, filename in enumerate(filename_list):
 
     # list to hold the deviations on the parameters
     error_list = []
-    sigma_ab = []
+    ab_cov = []
+    beta_cov = []
     for cov_mat in cov:
         error_list.append(np.sqrt(np.diag(cov_mat)))
 
         # unpack the covariance between the a and b parameters
-        sigma_ab.append(cov_mat[2][3])
+        ab_cov.append(cov_mat[2][3])
+        # unpack the covariance between beta1 and beta2
+        beta_cov.append(cov_mat[4][5])
     # convert to numpy array, for convenience
     error_list = np.asarray(error_list)
-    sigma_ab = np.asarray(sigma_ab)
+    ab_cov = np.asarray(ab_cov)
+    beta_cov = np.asarray(beta_cov)
     #unpack the needed deviation values
     sigma_a = error_list[:, 2]
     sigma_b = error_list[:, 3]
@@ -94,17 +99,23 @@ for n, filename in enumerate(filename_list):
     beta_minor = np.asarray(beta_minor)
 
     # calculate the deviations for alpha
-    sigma_alpha = .5*np.divide(np.sqrt(sigma_a**2 + sigma_b**2 + 2*sigma_ab), alpha)
+    sigma_alpha = .5*np.divide(np.sqrt(sigma_a**2 + sigma_b**2 + 2*ab_cov), alpha)
 
+    # calculate the beta ratios and deviation
+    beta_ratio = np.divide(beta_major, beta_minor)
+    beta_ratio_dev = np.sqrt(sigma_beta_major**2 + sigma_beta_minor**2 - 2*beta_cov)
 
 
     # plot the stuff
     plt.figure('alpha values')  # select correct figure
-    plt.errorbar(measured_flux, alpha, yerr=sigma_alpha, ls='None', marker='o', capsize=2)
+    plt.errorbar(measured_flux, alpha, yerr=sigma_alpha, ls='None', marker='o', capsize=3)
     plt.figure('beta values')  # select correct figure
-    beta_major_plot.errorbar(measured_flux, beta_major, yerr=sigma_beta_major, ls='None', marker='o', capsize=2)
-    beta_minor_plot.errorbar(measured_flux, beta_minor, yerr=sigma_beta_minor, ls='None', marker='o', capsize=2)
-
+    beta_major_plot.errorbar(measured_flux, beta_major, yerr=sigma_beta_major, ls='None', marker='o', capsize=3)
+    beta_minor_plot.errorbar(measured_flux, beta_minor, yerr=sigma_beta_minor, ls='None', marker='o', capsize=3)
+    plt.figure('beta ratio')
+    # plt.errorbar(measured_flux, beta_ratio, yerr=beta_ratio_dev, ls='None', marker='o', capsize=3)
+    plt.plot(measured_flux, beta_ratio, ls='None', marker='o')
+    
 plt.figure('alpha values')
 plt.xlabel('Measured Flux (e-)')
 plt.ylabel('Average Width alpha (pixels)')
@@ -115,6 +126,11 @@ beta_major_plot.set_ylabel(r'Major $\beta$ Value')
 beta_minor_plot.set_ylim(0, 22)
 beta_minor_plot.set_xlabel('Measured Flux (e-)')
 beta_minor_plot.set_ylabel(r'Minor $\beta$ Value')
+
+plt.figure('beta ratio')
+plt.xlabel('Measured Flux (e-)')
+plt.title(r'Ratio of major $\beta$ value to minor $\beta$ value')
+plt.ylim(0, 6)
 
 plt.show()
 
