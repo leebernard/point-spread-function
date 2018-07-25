@@ -198,7 +198,7 @@ for region in selected_regions:
 n = 0  # counting variable. Not pythonic, but w/e
 
 # variables for holding the results
-background_results = [] # holds background, dev
+background_results = []  # holds background, dev
 aperture_data = []
 fit_results = []
 fit_cov = []

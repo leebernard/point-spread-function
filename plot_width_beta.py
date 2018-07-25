@@ -59,18 +59,27 @@ for n, filename in enumerate(filename_list):
     error_list = np.asarray(error_list)
     ab_cov = np.asarray(ab_cov)
     beta_cov = np.asarray(beta_cov)
+
     #unpack the needed deviation values
+    sigma_flux = error_list[:, 0]
     sigma_a = error_list[:, 2]
     sigma_b = error_list[:, 3]
     sigma_beta_major = error_list[:, 4]
     sigma_beta_minor = error_list[:, 5]
 
-    # unpack the measured flux
+    # unpack the calculated Flux
     measured_flux = []
     for aperture in apertures:
         measured_flux.append(np.sum(aperture))
     # convert to a numpy array. This is done separately, to avoid unnecessary copying of arrays
     measured_flux = np.asarray(measured_flux)
+
+    # unpack the calculated flux
+    calc_flux = []
+    for parameter in parameters:
+        calc_flux.append(parameter[0])
+    # convert to numpy array
+    calc_flux = np.asarray(calc_flux)
 
     # unpack the alpha parameter
     # unpack the beta1 parameter
@@ -101,10 +110,28 @@ for n, filename in enumerate(filename_list):
     # calculate the deviations for alpha
     sigma_alpha = .5*np.divide(np.sqrt(sigma_a**2 + sigma_b**2 + 2*ab_cov), alpha)
 
+
+    # calculate the relative errors
+    relative_alpha = sigma_alpha/alpha
+    relative_flux = sigma_flux/calc_flux
+    relative_beta_major = sigma_beta_major/beta_major
+    relative_beta_minor = sigma_beta_minor/beta_minor
+
+    # reject any parameters with relative errors above a certain amount
+    mask = np.zeros(alpha.shape, dtype=bool)
+    threshold = .49
+    for m, tuple in enumerate(zip(relative_alpha, relative_flux, relative_beta_major, relative_beta_minor)):
+        # if relative error is above the threshold, mask the corresponding parameter results
+        if any(np.array(tuple) > threshold):
+            mask[m] = True
+
+
     # calculate the beta ratios and deviation
     beta_ratio = np.divide(beta_major, beta_minor)
     beta_ratio_dev = np.sqrt(sigma_beta_major**2 + sigma_beta_minor**2 - 2*beta_cov)
 
+    # apply the mask to the x values. this surpresses plotting of the value
+    # measured_flux = np.ma.array(measured_flux, mask=mask)
 
     # plot the stuff
     plt.figure('alpha values')  # select correct figure

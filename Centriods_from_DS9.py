@@ -4,6 +4,8 @@
 import numpy as np
 # import matplotlib
 import matplotlib.pyplot as plt
+import pickle
+
 # import re
 from astropy.io import fits
 import pyds9
@@ -250,8 +252,10 @@ gain = hdu[0].header['GAIN']
 # use the regions to produce apertures of thedata
 # also background subtract the data
 aperture_list = []  # list for holding aperture data
+lower_left = []
 for region in selected_regions:
     current_aperture = bias_subtracted_data[region.ymin:region.ymax, region.xmin:region.xmax]
+    lower_left.append([region.ymin, region.xmin])
 
     # convert to electron count
     current_aperture = current_aperture*gain
@@ -261,14 +265,22 @@ for region in selected_regions:
 """calculate the centroid for each aperture"""
 
 
+# variables for holding the results
+background_results = [] # holds background, dev
+aperture_data = []
+fit_results = []
+fit_cov = []
 
 # generate each curve fit
 from scipy.optimize import curve_fit
-for aperture in aperture_list:
+for n, aperture in enumerate(aperture_list):
 
     print('---------------------')
+    print('Aperture '+str(n))
     # background subtract the aperture
-    aperture, mask, background_dev = background_subtract(aperture)
+    background_value, mask, background_dev = background_subtract(aperture)
+
+    aperture = aperture - background_value
 
     # generate the associated pixel error
     aperture_err = np.sqrt(aperture + background_dev**2)
@@ -326,11 +338,18 @@ for aperture in aperture_list:
     except RuntimeError:
         print('Unable to find fit.')
         axisarg[0][1].set_title('Fit not found within parameter bounds')
+        del lower_left[n]  # remove the lower left location that failed
     else:
 
         error = np.sqrt(np.diag(m_cov))
         # print('Error on parameters')
         # print(error)
+
+        # save the results
+        background_results.append([background_value, background_dev])
+        aperture_data.append(aperture)
+        fit_results.append(m_fit)
+        fit_cov.append(m_cov)
 
         x_center = m_fit[1]
         y_center = m_fit[2]
@@ -393,3 +412,22 @@ for aperture in aperture_list:
         # axisarg[0][0].errorbar(x_center, y_center, xerr=x_width, yerr=y_width, ecolor='red')
 
 plt.show()
+
+
+# convert lower left values into a numpy array
+lower_left = np.asarray(lower_left)
+
+# pack the results as a dictionary
+archive = {'apertures': aperture_data, 'background': background_results, 'parameters': fit_results,
+           'param_cov': fit_cov, 'location': lower_left}
+
+# routine for saving the aperture data
+filename = '/home/lee/Documents/single-moffat-archive-im7.pkl'
+
+with open(filename, mode='wb') as file:
+    pickle.dump(archive, file)
+
+# Loading procedure
+# with open(filename, mode='rb') as file:
+#     archive = pickle.load(file)
+
