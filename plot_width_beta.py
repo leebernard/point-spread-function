@@ -55,6 +55,7 @@ for n, filename in enumerate(filename_list):
         ab_cov.append(cov_mat[2][3])
         # unpack the covariance between beta1 and beta2
         beta_cov.append(cov_mat[4][5])
+        # unpack the covariance
     # convert to numpy array, for convenience
     error_list = np.asarray(error_list)
     ab_cov = np.asarray(ab_cov)
@@ -81,16 +82,16 @@ for n, filename in enumerate(filename_list):
     # convert to numpy array
     calc_flux = np.asarray(calc_flux)
 
-    # unpack the alpha parameter
+    # unpack the width parameters a and b
     # unpack the beta1 parameter
     # unpack the beta2 parameter
-    alpha = []
+    a_param = []
+    b_param = []
     beta_major = []
     beta_minor = []
     for m, parameter in enumerate(parameters):
-        # calculate the average width
-        alpha_value = np.sqrt(parameter[2]*parameter[3])
-        alpha.append(alpha_value)
+        a_param.append(parameter[2])
+        b_param.append(parameter[3])
 
         # check if beta1 and two got flipped
         # beta1 (beta major) should always be larger than beta2 (beta minor)
@@ -103,12 +104,16 @@ for n, filename in enumerate(filename_list):
             beta_major.append(parameter[4])
             beta_minor.append(parameter[5])
     # convert to numpy arrays
-    alpha = np.asarray(alpha)
+    a_param = np.asarray(a_param)
+    b_param = np.asarray(b_param)
     beta_major = np.asarray(beta_major)
     beta_minor = np.asarray(beta_minor)
 
+
+    # calculate the average width, alpha
+    alpha = np.sqrt(a_param * b_param)
     # calculate the deviations for alpha
-    sigma_alpha = .5*np.divide(np.sqrt(sigma_a**2 + sigma_b**2 + 2*ab_cov), alpha)
+    sigma_alpha = .5*np.sqrt(b_param/a_param*(sigma_a**2) + a_param/b_param*(sigma_b**2) + 2*ab_cov)
 
 
     # calculate the relative errors
@@ -119,19 +124,20 @@ for n, filename in enumerate(filename_list):
 
     # reject any parameters with relative errors above a certain amount
     mask = np.zeros(alpha.shape, dtype=bool)
-    threshold = .49
+    threshold = 1
     for m, tuple in enumerate(zip(relative_alpha, relative_flux, relative_beta_major, relative_beta_minor)):
         # if relative error is above the threshold, mask the corresponding parameter results
         if any(np.array(tuple) > threshold):
             mask[m] = True
-
+    # apply the mask to the x values. this surpresses plotting of the value
+    measured_flux = np.ma.array(measured_flux, mask=mask)
 
     # calculate the beta ratios and deviation
     beta_ratio = np.divide(beta_major, beta_minor)
     beta_ratio_dev = np.sqrt(sigma_beta_major**2 + sigma_beta_minor**2 - 2*beta_cov)
 
-    # apply the mask to the x values. this surpresses plotting of the value
-    # measured_flux = np.ma.array(measured_flux, mask=mask)
+    # calculate the Full Width, Half Max
+
 
     # plot the stuff
     plt.figure('alpha values')  # select correct figure
@@ -146,6 +152,7 @@ for n, filename in enumerate(filename_list):
 plt.figure('alpha values')
 plt.xlabel('Measured Flux (e-)')
 plt.ylabel('Average Width alpha (pixels)')
+plt.legend(('Frame 1', 'Frame 2', 'Frame 4', 'Frame 5', 'Frame 7', 'Frame 9', 'Frame 10', 'Frame 12', 'Frame 13', 'Frame 16'), loc='best')
 
 plt.figure('beta values')
 beta_major_plot.set_ylim(0, 22)
