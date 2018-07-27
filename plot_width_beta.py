@@ -34,6 +34,9 @@ beta_fig = plt.figure('beta values', figsize=(12,10))
 beta_ratio_fig = plt.figure('beta ratio', figsize=(12,10))
 beta_major_plot = beta_fig.add_subplot(211)
 beta_minor_plot = beta_fig.add_subplot(212)
+fwhm_fig = plt.figure('full width half max', figsize=(12, 10))
+fwhm_beta_major_plot = fwhm_fig.add_subplot(211)
+fwhm_beta_minor_plot = fwhm_fig.add_subplot(212)
 
 for n, filename in enumerate(filename_list):
     with open(filename, mode='rb') as file:
@@ -48,6 +51,10 @@ for n, filename in enumerate(filename_list):
     error_list = []
     ab_cov = []
     beta_cov = []
+    abeta_major_cov = []
+    abeta_minor_cov = []
+    bbeta_major_cov = []
+    bbeta_minor_cov = []
     for cov_mat in cov:
         error_list.append(np.sqrt(np.diag(cov_mat)))
 
@@ -55,13 +62,22 @@ for n, filename in enumerate(filename_list):
         ab_cov.append(cov_mat[2][3])
         # unpack the covariance between beta1 and beta2
         beta_cov.append(cov_mat[4][5])
-        # unpack the covariance
+        # unpack the covariance for a, b and beta1
+        abeta_major_cov.append(cov_mat[2][4])
+        bbeta_major_cov.append(cov_mat[3][4])
+        # unpack the covariance for a, b and beta2
+        abeta_minor_cov.append(cov_mat[2][5])
+        bbeta_minor_cov.append(cov_mat[3][5])
     # convert to numpy array, for convenience
     error_list = np.asarray(error_list)
     ab_cov = np.asarray(ab_cov)
     beta_cov = np.asarray(beta_cov)
+    abeta_major_cov = np.asarray(abeta_major_cov)
+    abeta_minor_cov = np.asarray(abeta_minor_cov)
+    bbeta_major_cov = np.asarray(bbeta_major_cov)
+    bbeta_minor_cov = np.asarray(bbeta_minor_cov)
 
-    #unpack the needed deviation values
+    # unpack the needed deviation values
     sigma_flux = error_list[:, 0]
     sigma_a = error_list[:, 2]
     sigma_b = error_list[:, 3]
@@ -100,6 +116,9 @@ for n, filename in enumerate(filename_list):
             beta_minor.append(parameter[4])
             # swap the error values
             sigma_beta_major[m], sigma_beta_minor[m] = sigma_beta_minor[m], sigma_beta_major[m]
+            # swap the covariance values
+            abeta_major_cov, abeta_minor_cov = abeta_minor_cov, abeta_major_cov
+            bbeta_major_cov, bbeta_minor_cov = bbeta_minor_cov, bbeta_major_cov
         else:
             beta_major.append(parameter[4])
             beta_minor.append(parameter[5])
@@ -115,6 +134,19 @@ for n, filename in enumerate(filename_list):
     # calculate the deviations for alpha
     sigma_alpha = .5*np.sqrt(b_param/a_param*(sigma_a**2) + a_param/b_param*(sigma_b**2) + 2*ab_cov)
 
+    # calculate the Full Width, Half Max for Beta Major
+    fwhm_major = 2*alpha*np.sqrt(2**(1/beta_major) - 1)
+    varience_fwhm_major = ((np.sqrt(2**(1/beta_major) - 1))*sigma_alpha)**2 \
+        + (np.divide(alpha*2**(1/beta_major)*np.log(1/2), (2*np.sqrt(2**(1/beta_major) - 1)*beta_major**2))*sigma_beta_major)**2 \
+        + (np.sqrt(b_param/a_param)*abeta_major_cov + np.sqrt(a_param/b_param)*bbeta_major_cov) * (alpha*np.log(1/2)*2**(1/beta_major))/(2*beta_major**2)
+    sigma_fwhm_major = 2*np.sqrt(varience_fwhm_major)
+
+    # calculate the Full Width, Half Max for Beta Minor
+    fwhm_minor = 2*alpha*np.sqrt(2**(1/beta_minor) - 1)
+    varience_fwhm_minor = ((np.sqrt(2**(1/beta_minor) - 1))*sigma_alpha)**2 \
+        + (np.divide(alpha*2**(1/beta_minor)*np.log(1/2), (2*np.sqrt(2**(1/beta_minor) - 1)*beta_minor**2))*sigma_beta_minor)**2 \
+        + (np.sqrt(b_param/a_param)*abeta_minor_cov + np.sqrt(a_param/b_param)*bbeta_minor_cov) * (alpha*np.log(1/2)*2**(1/beta_minor))/(2*beta_minor**2)
+    sigma_fwhm_minor = 2*np.sqrt(varience_fwhm_minor)
 
     # calculate the relative errors
     relative_alpha = sigma_alpha/alpha
@@ -142,13 +174,19 @@ for n, filename in enumerate(filename_list):
     # plot the stuff
     plt.figure('alpha values')  # select correct figure
     plt.errorbar(measured_flux, alpha, yerr=sigma_alpha, ls='None', marker='o', capsize=3)
+
     plt.figure('beta values')  # select correct figure
     beta_major_plot.errorbar(measured_flux, beta_major, yerr=sigma_beta_major, ls='None', marker='o', capsize=3)
     beta_minor_plot.errorbar(measured_flux, beta_minor, yerr=sigma_beta_minor, ls='None', marker='o', capsize=3)
+
     plt.figure('beta ratio')
     # plt.errorbar(measured_flux, beta_ratio, yerr=beta_ratio_dev, ls='None', marker='o', capsize=3)
     plt.plot(measured_flux, beta_ratio, ls='None', marker='o')
-    
+
+    plt.figure('full width half max')
+    fwhm_beta_major_plot.errorbar(measured_flux, fwhm_major, yerr=sigma_fwhm_major, ls='None', marker='o', capsize=3)
+    fwhm_beta_minor_plot.errorbar(measured_flux, fwhm_minor, yerr=sigma_fwhm_minor, ls='None', marker='o', capsize=3)
+
 plt.figure('alpha values')
 plt.xlabel('Measured Flux (e-)')
 plt.ylabel('Average Width alpha (pixels)')

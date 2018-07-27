@@ -11,6 +11,7 @@ The fit results are from fitting astronomical objects to a sum of two
 moffat functions. The data (aperture) that was used to produce each fit is 
 included, as well as the location of the lower left corner of each aperture
 
+flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta):
 """
 
 # filename = '/home/lee/Documents/single-moffat-archive-im7.pkl'
@@ -95,9 +96,10 @@ relative_beta = sigma_beta / beta
 
 # calculate the Full Width, Half Max
 fwhm = 2*alpha*np.sqrt(2**(1/beta) - 1)
-sigma_fwhm = (2*np.sqrt(2**(1/beta) - 1))**2 * sigma_alpha**2 \
-             + np.divide(alpha*2**(1/beta)*np.log(1/2), (np.sqrt(2**(1/beta) - 1)*beta**2))**2 * sigma_beta**2 \
-             + (np.sqrt(b_param/a_param)*abeta_cov + np.sqrt(a_param/b_param)) * (2*alpha*np.log(1/2)*2**(1/beta))/(beta**2)
+varience_fwhm = ((np.sqrt(2**(1/beta) - 1))*sigma_alpha)**2 \
+             + (np.divide(alpha*2**(1/beta)*np.log(1/2), (2*np.sqrt(2**(1/beta) - 1)*beta**2))*sigma_beta)**2 \
+             + (np.sqrt(b_param/a_param)*abeta_cov + np.sqrt(a_param/b_param)*bbeta_cov) * (alpha*np.log(1/2)*2**(1/beta))/(2*beta**2)
+sigma_fwhm = 2*np.sqrt(varience_fwhm)
 
 # reject any parameters with relative errors above a certain amount
 mask = np.zeros(alpha.shape, dtype=bool)
@@ -111,7 +113,7 @@ measured_flux = np.ma.array(measured_flux, mask=mask)
 
 # plot the stuff
 plt.figure('alpha values', figsize=(7, 6))  # select correct figure
-plt.errorbar(measured_flux, 2*alpha, yerr=2*sigma_alpha, ls='None', marker='o', capsize=3)
+plt.errorbar(measured_flux, alpha, yerr=sigma_alpha, ls='None', marker='o', capsize=3)
 
 plt.figure('beta values', figsize=(7, 6))  # select correct figure
 plt.errorbar(measured_flux, beta, yerr=sigma_beta, ls='None', marker='o', capsize=3)
@@ -131,9 +133,9 @@ plt.ylabel(r'$\beta$ Value')
 plt.xlabel('Measured Flux (e-)')
 
 plt.figure('Full Width, Half Maximum')
-plt.title('Single Moffat Full Width Half Maximum')
+plt.title('Test version')
 plt.xlabel('Measured Flux (e-)')
 plt.ylabel('Full Width, Half Maximum (pixels)')
-plt.ylim(3, 6)
+plt.ylim(3, 5)
 
 plt.show()
