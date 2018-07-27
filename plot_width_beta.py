@@ -36,7 +36,9 @@ beta_major_plot = beta_fig.add_subplot(211)
 beta_minor_plot = beta_fig.add_subplot(212)
 fwhm_fig = plt.figure('full width half max', figsize=(12, 10))
 fwhm_beta_major_plot = fwhm_fig.add_subplot(211)
+plt.title('Large beta Value')
 fwhm_beta_minor_plot = fwhm_fig.add_subplot(212)
+plt.title('Small beta Value')
 
 for n, filename in enumerate(filename_list):
     with open(filename, mode='rb') as file:
@@ -203,6 +205,11 @@ plt.figure('beta ratio')
 plt.xlabel('Measured Flux (e-)')
 plt.title(r'Ratio of major $\beta$ value to minor $\beta$ value')
 plt.ylim(0, 6)
+
+plt.figure('full width half max')
+fwhm_beta_major_plot.set_ylabel('Full Width Half Maximum (pixels)')
+fwhm_beta_minor_plot.set_ylabel('Full Width Half Maxiumum (pixels)')
+fwhm_beta_minor_plot.set_xlabel('Measured Flux (e-)')
 
 plt.show()
 

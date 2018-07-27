@@ -361,12 +361,12 @@ lower_left = np.asarray(lower_left)
 # pack the results as a dictionary
 archive = {'apertures': aperture_data, 'background': background_results, 'parameters': fit_results,
            'param_cov': fit_cov, 'location': lower_left}
-
-# routine for saving the aperture data
-filename = '/home/lee/Documents/sample-archive-im16.pkl'
-
-with open(filename, mode='wb') as file:
-    pickle.dump(archive, file)
+#
+# # routine for saving the aperture data
+# filename = '/home/lee/Documents/sample-archive-im16.pkl'
+#
+# with open(filename, mode='wb') as file:
+#     pickle.dump(archive, file)
 
 # Loading procedure
 # with open(filename, mode='rb') as file:
