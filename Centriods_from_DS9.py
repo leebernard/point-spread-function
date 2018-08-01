@@ -422,7 +422,7 @@ archive = {'apertures': aperture_data, 'background': background_results, 'parame
            'param_cov': fit_cov, 'location': lower_left}
 
 # routine for saving the aperture data
-filename = '/home/lee/Documents/single-moffat-archive-im7.pkl'
+filename = '/home/lee/Documents/single-moffat-archive-im16.pkl'
 
 with open(filename, mode='wb') as file:
     pickle.dump(archive, file)
