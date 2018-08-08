@@ -15,11 +15,11 @@ flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta):
 """
 filename_list = []
 # filename = '/home/lee/Documents/single-moffat-archive-im7.pkl'
-filename_list.append('/home/lee/Documents/single-moffat-archive-im1.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im2.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im4.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im5.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im7.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im1.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im2.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im4.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im5.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im7.pkl')
 
 filename_list.append('/home/lee/Documents/single-moffat-archive-im9.pkl')
 filename_list.append('/home/lee/Documents/single-moffat-archive-im10.pkl')
@@ -44,7 +44,6 @@ for n, filename in enumerate(filename_list):
     ab_cov = []
     abeta_cov = []
     bbeta_cov = []
-    beta_cov = []
     for cov_mat in cov:
         error_list.append(np.sqrt(np.diag(cov_mat)))
 
@@ -134,7 +133,7 @@ for n, filename in enumerate(filename_list):
     plt.errorbar(measured_flux, fwhm, yerr=sigma_fwhm, ls='None', marker='o', capsize=3)
 
 plt.figure('alpha values')
-plt.title('Single Moffat Alpha Values')
+plt.title('Single Moffat Alpha Values(Half Width Half Max)')
 plt.xlabel('Measured Flux (e-)')
 plt.ylabel('Average Width alpha (pixels)')
 # plt.ylim(1.5, 2.5)
@@ -150,7 +149,7 @@ plt.figure('Full Width, Half Maximum')
 plt.title('FWHM vs Flux')
 plt.xlabel('Measured Flux (e-)')
 plt.ylabel('Full Width, Half Maximum (pixels)')
-plt.ylim(2, 6)
-plt.legend(('Frame 1', 'Frame 2', 'Frame 4', 'Frame 5', 'Frame 7', 'Frame 9', 'Frame 10', 'Frame 12', 'Frame 13', 'Frame 16'), loc='best')
+plt.ylim(3.75, 4.5)
+plt.legend(('Frame 9', 'Frame 10', 'Frame 12', 'Frame 13', 'Frame 16'), loc='best')  # ('Frame 1', 'Frame 2', 'Frame 4', 'Frame 5', 'Frame 7')
 
 plt.show()

@@ -41,9 +41,11 @@ def flat_Moffat_sum(indata, flux1, flux2, alpha, beta1, beta2, x0, y0):
     return moffat_fun.ravel()
 '''
 def cov_to_coeff(cov):
-    """This function converts a covarience matrix to a correlation coefficient matrix
+    """
+    This function converts a covarience matrix to a correlation coefficient matrix
 
-    It does so by normalizing each entry in the matrix by the product of the deviations of the relevent """
+    It does so by normalizing each entry in the matrix by the product of the
+    of the relevant variances"""
     # make a copy of the covarience array
     coeff = np.copy(cov)
 
