@@ -31,17 +31,17 @@ def cov_to_coeff(cov):
     return coeff
 filename_list = []
 # filename = '/home/lee/Documents/single-moffat-archive-im7.pkl'
-filename_list.append('/home/lee/Documents/single-moffat-archive-im1.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im2.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im4.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im5.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im1.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im2.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im4.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im5.pkl')
 filename_list.append('/home/lee/Documents/single-moffat-archive-im7.pkl')
-
-filename_list.append('/home/lee/Documents/single-moffat-archive-im9.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im10.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im12.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im13.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im16.pkl')
+#
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im9.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im10.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im12.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im13.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im16.pkl')
 
 
 
@@ -66,6 +66,8 @@ for n, filename in enumerate(filename_list):
 
         # convert covariance matrix to correlation coeff
         coeff_mat = cov_to_coeff(cov_mat)
+        print('--------------------------')
+        print(np.array_str(coeff_mat, precision=2, suppress_small=True))
         # unpack the correlation coeff between the flux and other parameters
         fluxbeta_coeff.append(coeff_mat[0][3])
         fluxa_coeff.append(coeff_mat[0][4])
@@ -78,6 +80,7 @@ for n, filename in enumerate(filename_list):
         abeta_coeff.append(coeff_mat[4][3])
         bbeta_coeff.append(coeff_mat[5][3])
 
+
 # convert to numpy arrays
 fluxbeta_coeff = np.asarray(fluxbeta_coeff)
 fluxa_coeff = np.asarray(fluxa_coeff)
@@ -87,20 +90,32 @@ abeta_coeff = np.asarray(abeta_coeff)
 bbeta_coeff = np.asarray(bbeta_coeff)
 
 
-# # figures for plotting
-# flux_hist = plt.figure('Flux coeff', figsize=(12,10))
-# flux_a_coeff = flux_hist.add_subplot(311)
-# flux_b_coeff = flux_hist.add_subplot(312)
-# flux_beta_coeff = flux_hist.add_subplot(313)
-bins = np.linspace(0, 1, num=251)
+# figures for plotting
+flux_hist = plt.figure('Flux coeff', figsize=(12,10))
+flux_a_coeff = flux_hist.add_subplot(311)
+flux_b_coeff = flux_hist.add_subplot(312)
+flux_beta_coeff = flux_hist.add_subplot(313)
+# np.linspace(-1, 0, num=251)
 
 # flux_a_coeff.hist(np.clip(fluxa_coeff, bins[0], bins[-1]), bins=bins, color='tab:blue')
-plt.figure('flux a coeff')
-plt.hist(fluxa_coeff, bins=bins, color='tab:blue')
-plt.figure('flux b coeff')
-plt.hist(fluxb_coeff, bins=bins, color='tab:blue')
-plt.figure('flux beta')
-plt.hist(fluxbeta_coeff, bins=bins, color='tab:blue')
+flux_a_coeff.hist(fluxa_coeff, bins=250, color='tab:blue')
+plt.title('Coeff of flux and width a')
+flux_b_coeff.hist(fluxb_coeff, bins=250, color='tab:blue')
+plt.title('Coeff of flux and width b')
+flux_beta_coeff.hist(fluxbeta_coeff, bins=250, color='tab:blue')
+plt.title('Coeff of flux and beta')
 
 
+width_hist = plt.figure('width coeff', figsize=(12, 10))
+a_beta_coeff = width_hist.add_subplot(311)
+b_beta_coeff = width_hist.add_subplot(312)
+a_b_coeff = width_hist.add_subplot(313)
+
+# flux_a_coeff.hist(np.clip(fluxa_coeff, bins[0], bins[-1]), bins=bins, color='tab:blue')
+a_beta_coeff.hist(abeta_coeff, bins=250, color='tab:purple')
+plt.title('Coeff of width a and beta')
+b_beta_coeff.hist(bbeta_coeff, bins=250, color='tab:purple')
+plt.title('Coeff of width b and beta')
+a_b_coeff.hist(ab_coeff, bins=250, color='tab:purple')
+plt.title('Coeff of width a and width b')
 plt.show()
