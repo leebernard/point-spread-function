@@ -1,6 +1,6 @@
 
 
-def bias_subtract(HDU, bias_sec=None):  # pass header data unit.  REMEBER, this is pass-by-reference
+def bias_subtract(HDU, bias_sec=None, keyword='BIASSEC'):  # pass header data unit.  REMEBER, this is pass-by-reference
     """Takes a header data unit, find the bias data from BIASSEC, and performs bias calculations and subtraction.
 
     Parameters
@@ -28,7 +28,7 @@ def bias_subtract(HDU, bias_sec=None):  # pass header data unit.  REMEBER, this 
     # check if parameters give the bias section, if not, automatically get it
     if not bias_sec:
         # pull the bias section information from the header readout.
-        Bias_Sec = HDU.header['BIASSEC']
+        Bias_Sec = HDU.header[keyword]
         print('Bias Section is ' + Bias_Sec)
         # print(type(Bias_Sec))
         # slice the string, for converting to int

@@ -16,21 +16,27 @@ included, as well as the location of the lower left corner of each aperture
 # load the data
 filename_list = []
 
-filename_list.append('/home/lee/Documents/sample-archive-im1.pkl')
-filename_list.append('/home/lee/Documents/sample-archive-im2.pkl')
-filename_list.append('/home/lee/Documents/sample-archive-im4.pkl')
-filename_list.append('/home/lee/Documents/sample-archive-im5.pkl')
-filename_list.append('/home/lee/Documents/sample-archive-im7.pkl')
+# filename_list.append('/home/lee/Documents/decam-N9-A-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-N9-B-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-N4-A-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-N4-B-archive.pkl')
 
-filename_list.append('/home/lee/Documents/sample-archive-im9.pkl')
-filename_list.append('/home/lee/Documents/sample-archive-im10.pkl')
-filename_list.append('/home/lee/Documents/sample-archive-im12.pkl')
-filename_list.append('/home/lee/Documents/sample-archive-im13.pkl')
-filename_list.append('/home/lee/Documents/sample-archive-im16.pkl')
+
+filename_list.append('/home/lee/Documents/single-moffat-archive-im1.pkl')
+filename_list.append('/home/lee/Documents/single-moffat-archive-im2.pkl')
+filename_list.append('/home/lee/Documents/single-moffat-archive-im4.pkl')
+filename_list.append('/home/lee/Documents/single-moffat-archive-im5.pkl')
+filename_list.append('/home/lee/Documents/single-moffat-archive-im7.pkl')
+
+filename_list.append('/home/lee/Documents/single-moffat-archive-im9.pkl')
+filename_list.append('/home/lee/Documents/single-moffat-archive-im10.pkl')
+filename_list.append('/home/lee/Documents/single-moffat-archive-im12.pkl')
+filename_list.append('/home/lee/Documents/single-moffat-archive-im13.pkl')
+filename_list.append('/home/lee/Documents/sample-single-moffat-im16.pkl')
 
 # list for storing relative error values
 relative_err_store = []
-f1 = plt.figure('Error vs sn ratio')
+plt.figure('Error vs sn ratio', figsize=(12, 10))
 for n, filename in enumerate(filename_list):
     with open(filename, mode='rb') as file:
         archive = pickle.load(file)
@@ -87,25 +93,24 @@ for n, filename in enumerate(filename_list):
         storage.extend(np.ones(relative_err[m].size)*ratio_holder)
 
     plt.figure('Error vs sn ratio')
-    flux = plt.plot(ratio, relative_err[:,0], ls='None', marker='o', color='tab:blue')  # , label='Flux')
-    p = plt.plot(ratio, relative_err[:,1], ls='None', marker='o', color='tab:orange')  # , label='p')
-    a = plt.plot(ratio, relative_err[:,2], ls='None', marker='+', markersize=12, color='tab:green')  # , label='a')
-    b = plt.plot(ratio, relative_err[:,3], ls='None', marker='o', color='tab:red')  # , label='b')
-    beta1 = plt.plot(ratio, relative_err[:,4], ls='None', marker='o', color='tab:purple')  # , label='beta1')
-    beta2 = plt.plot(ratio, relative_err[:,5], ls='None', marker='o', color='tab:brown')  # , label='beta2')
+    plt.plot(ratio, relative_err[:,0], ls='None', marker='v', markersize=10, color='tab:blue')  # , label='Flux')
+    plt.plot(ratio, relative_err[:,4], ls='None', marker='o', color='tab:red')  # , label='a')
+    plt.plot(ratio, relative_err[:,5], ls='None', marker='+', markersize=12, color='tab:green')  # , label='b')
+    plt.plot(ratio, relative_err[:,3], ls='None', marker='o', color='tab:purple')  # , label='beta')
 
 # plt.yscale('log')
 # plt.ylim(ymax=2)
-plt.ylim(0, 1)
-plt.title('Error vs Signal to Noise Ratio')
+plt.ylim(0, .25)
+# plt.xlim(0, 530)
+plt.title('Error vs SN DECam data MOSAIC-3')
 plt.xlabel('Signal to Noise Ratio')
 plt.ylabel('Relative Error of Fit Parameters (Linear Scale)')
-plt.legend(('Flux', 'p', 'a', 'b', 'beta1', 'beta2'), loc='best')
+plt.legend(('Flux', 'a', 'b', 'beta',), loc='best')
 
 
 f2 = plt.figure('Error histogram')
 hist_data = np.asarray(relative_err_store)
-bins = np.linspace(0, 1, num=151)
+bins = np.linspace(0, .25, num=151)
 plt.hist(np.clip(hist_data, bins[0], bins[-1]), bins=bins)
 
 plt.show()

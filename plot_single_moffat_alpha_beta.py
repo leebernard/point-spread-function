@@ -14,18 +14,25 @@ included, as well as the location of the lower left corner of each aperture
 flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta):
 """
 filename_list = []
+
+filename_list.append('/home/lee/Documents/decam-N9-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N9-B-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N4-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N4-B-archive.pkl')
+
 # filename = '/home/lee/Documents/single-moffat-archive-im7.pkl'
+
 # filename_list.append('/home/lee/Documents/single-moffat-archive-im1.pkl')
 # filename_list.append('/home/lee/Documents/single-moffat-archive-im2.pkl')
 # filename_list.append('/home/lee/Documents/single-moffat-archive-im4.pkl')
 # filename_list.append('/home/lee/Documents/single-moffat-archive-im5.pkl')
 # filename_list.append('/home/lee/Documents/single-moffat-archive-im7.pkl')
-
-filename_list.append('/home/lee/Documents/single-moffat-archive-im9.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im10.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im12.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im13.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im16.pkl')
+#
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im9.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im10.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im12.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im13.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im16.pkl')
 
 # figures for plotting
 plt.figure('alpha values', figsize=(12, 10))
@@ -137,19 +144,20 @@ plt.title('Single Moffat Alpha Values(Half Width Half Max)')
 plt.xlabel('Measured Flux (e-)')
 plt.ylabel('Average Width alpha (pixels)')
 # plt.ylim(1.5, 2.5)
-plt.legend(('Frame 1', 'Frame 2', 'Frame 4', 'Frame 5', 'Frame 7', 'Frame 9', 'Frame 10', 'Frame 12', 'Frame 13', 'Frame 16'), loc='best')
+# plt.legend(('Frame 1', 'Frame 2', 'Frame 4', 'Frame 5', 'Frame 7', 'Frame 9', 'Frame 10', 'Frame 12', 'Frame 13', 'Frame 16'), loc='best')
+plt.legend(('CCD N9, amp A', 'CCD N9, amp B', ' CCD N4, amp A', 'CCD N4, amp B'))
 
 plt.figure('beta values')
 plt.title('Single Moffat Beta Values')
 plt.ylabel(r'$\beta$ Value')
 plt.xlabel('Measured Flux (e-)')
-plt.legend(('Frame 1', 'Frame 2', 'Frame 4', 'Frame 5', 'Frame 7', 'Frame 9', 'Frame 10', 'Frame 12', 'Frame 13', 'Frame 16'), loc='best')
+plt.legend(('CCD N9, amp A', 'CCD N9, amp B', ' CCD N4, amp A', 'CCD N4, amp B'))
 
 plt.figure('Full Width, Half Maximum')
 plt.title('FWHM vs Flux')
 plt.xlabel('Measured Flux (e-)')
 plt.ylabel('Full Width, Half Maximum (pixels)')
-plt.ylim(3.75, 4.5)
-plt.legend(('Frame 9', 'Frame 10', 'Frame 12', 'Frame 13', 'Frame 16'), loc='best')  # ('Frame 1', 'Frame 2', 'Frame 4', 'Frame 5', 'Frame 7')
+# plt.ylim(3.75, 4.5)
+plt.legend(('CCD N9, amp A', 'CCD N9, amp B', ' CCD N4, amp A', 'CCD N4, amp B'))
 
 plt.show()

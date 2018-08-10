@@ -30,18 +30,26 @@ def cov_to_coeff(cov):
 
     return coeff
 filename_list = []
-# filename = '/home/lee/Documents/single-moffat-archive-im7.pkl'
-filename_list.append('/home/lee/Documents/single-moffat-archive-im1.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im2.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im4.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im5.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im7.pkl')
 
-filename_list.append('/home/lee/Documents/single-moffat-archive-im9.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im10.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im12.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im13.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im16.pkl')
+
+# filename = '/home/lee/Documents/single-moffat-archive-im7.pkl'
+
+filename_list.append('/home/lee/Documents/decam-N9-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N9-B-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N4-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N4-B-archive.pkl')
+
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im1.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im2.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im4.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im5.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im7.pkl')
+#
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im9.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im10.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im12.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im13.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im16.pkl')
 
 
 

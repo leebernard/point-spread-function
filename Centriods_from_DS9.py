@@ -223,9 +223,6 @@ def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta):
     return output.ravel()
 
 
-# check if ds9 is accesible
-if not pyds9.ds9_targets():
-    input('DS9 target not found. Please start/restart DS9, then press enter')
 
 # show the ds9 target
 print('ds9 target instance')
@@ -233,6 +230,12 @@ print(pyds9.ds9_targets())
 
 # create a DS9 object
 ds9 = pyds9.DS9()
+
+# load the region file
+# regionfile = '/home/lee/Documents/DECam_N4_B.reg'
+# ds9.set('regions load ' + regionfile)
+# ds9.set('regions select all')
+
 
 # import the current fits file loaded in DS9
 hdu = ds9.get_pyfits()
@@ -246,8 +249,8 @@ selected_regions = get_regions(get_data=False)
 selected_regions.sort(key=lambda region: np.sqrt(region.x_coord**2 + region.y_coord**2))
 
 # get the bias subtracted data
-bias_subtracted_data = bias_subtract(hdu[0])
-gain = hdu[0].header['GAIN']
+bias_subtracted_data = bias_subtract(hdu[0], keyword='BIASSECA')
+gain = hdu[0].header['GAINA']
 
 # use the regions to produce apertures of thedata
 # also background subtract the data
@@ -422,7 +425,7 @@ archive = {'apertures': aperture_data, 'background': background_results, 'parame
            'param_cov': fit_cov, 'location': lower_left}
 
 # routine for saving the aperture data
-filename = '/home/lee/Documents/single-moffat-archive-im16.pkl'
+filename = '/home/lee/Documents/decam-S4-A-archive.pkl'
 
 with open(filename, mode='wb') as file:
     pickle.dump(archive, file)
