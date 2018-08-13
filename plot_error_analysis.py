@@ -16,23 +16,29 @@ included, as well as the location of the lower left corner of each aperture
 # load the data
 filename_list = []
 
-# filename_list.append('/home/lee/Documents/decam-N9-A-archive.pkl')
-# filename_list.append('/home/lee/Documents/decam-N9-B-archive.pkl')
-# filename_list.append('/home/lee/Documents/decam-N4-A-archive.pkl')
-# filename_list.append('/home/lee/Documents/decam-N4-B-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N9-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N9-B-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N4-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N4-B-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-S5-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-S5-B-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N5-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N5-B-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N3-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N3-B-archive.pkl')
 
-
-filename_list.append('/home/lee/Documents/single-moffat-archive-im1.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im2.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im4.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im5.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im7.pkl')
-
-filename_list.append('/home/lee/Documents/single-moffat-archive-im9.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im10.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im12.pkl')
-filename_list.append('/home/lee/Documents/single-moffat-archive-im13.pkl')
-filename_list.append('/home/lee/Documents/sample-single-moffat-im16.pkl')
+#
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im1.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im2.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im4.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im5.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im7.pkl')
+#
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im9.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im10.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im12.pkl')
+# filename_list.append('/home/lee/Documents/single-moffat-archive-im13.pkl')
+# filename_list.append('/home/lee/Documents/sample-single-moffat-im16.pkl')
 
 # list for storing relative error values
 relative_err_store = []

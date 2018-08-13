@@ -19,6 +19,14 @@ filename_list.append('/home/lee/Documents/decam-N9-A-archive.pkl')
 filename_list.append('/home/lee/Documents/decam-N9-B-archive.pkl')
 filename_list.append('/home/lee/Documents/decam-N4-A-archive.pkl')
 filename_list.append('/home/lee/Documents/decam-N4-B-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-S5-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-S5-B-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N5-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N5-B-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N3-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-N3-B-archive.pkl')
+
+# ('CCD N9, amp A', 'CCD N9, amp B', ' CCD N4, amp A', 'CCD N4, amp B', 'CCD S5, amp A', 'CCD S5, amp B', 'CCD N5, amp A','CCD N5, amp B')
 
 # filename = '/home/lee/Documents/single-moffat-archive-im7.pkl'
 
@@ -77,10 +85,13 @@ for n, filename in enumerate(filename_list):
 
     # unpack the calculated Flux
     measured_flux = []
+    max_pixel = []
     for aperture in apertures:
         measured_flux.append(np.sum(aperture))
+        max_pixel.append(np.max(aperture))
     # convert to a numpy array. This is done separately, to avoid unnecessary copying of arrays
     measured_flux = np.asarray(measured_flux)
+
 
     # unpack the calculated flux
     calc_flux = []
@@ -131,13 +142,13 @@ for n, filename in enumerate(filename_list):
 
     # plot the stuff
     plt.figure('alpha values')  # select correct figure
-    plt.errorbar(measured_flux, alpha, yerr=sigma_alpha, ls='None', marker='o', capsize=3)
+    plt.errorbar(max_pixel, alpha, yerr=sigma_alpha, ls='None', marker='o', capsize=3)
 
     plt.figure('beta values')  # select correct figure
-    plt.errorbar(measured_flux, beta, yerr=sigma_beta, ls='None', marker='o', capsize=3)
+    plt.errorbar(max_pixel, beta, yerr=sigma_beta, ls='None', marker='o', capsize=3)
 
     plt.figure('Full Width, Half Maximum')
-    plt.errorbar(measured_flux, fwhm, yerr=sigma_fwhm, ls='None', marker='o', capsize=3)
+    plt.errorbar(max_pixel, fwhm, yerr=sigma_fwhm, ls='None', marker='o', capsize=3)
 
 plt.figure('alpha values')
 plt.title('Single Moffat Alpha Values(Half Width Half Max)')
@@ -145,19 +156,22 @@ plt.xlabel('Measured Flux (e-)')
 plt.ylabel('Average Width alpha (pixels)')
 # plt.ylim(1.5, 2.5)
 # plt.legend(('Frame 1', 'Frame 2', 'Frame 4', 'Frame 5', 'Frame 7', 'Frame 9', 'Frame 10', 'Frame 12', 'Frame 13', 'Frame 16'), loc='best')
-plt.legend(('CCD N9, amp A', 'CCD N9, amp B', ' CCD N4, amp A', 'CCD N4, amp B'))
+plt.legend(('CCD N9, amp A', 'CCD N9, amp B', ' CCD N4, amp A', 'CCD N4, amp B', 'CCD S5, amp A', 'CCD S5, amp B',
+            'CCD N5, amp A','CCD N5, amp B', 'CCD N3, amp A', 'CCD N3, amp B'))
 
 plt.figure('beta values')
 plt.title('Single Moffat Beta Values')
 plt.ylabel(r'$\beta$ Value')
 plt.xlabel('Measured Flux (e-)')
-plt.legend(('CCD N9, amp A', 'CCD N9, amp B', ' CCD N4, amp A', 'CCD N4, amp B'))
+plt.legend(('CCD N9, amp A', 'CCD N9, amp B', ' CCD N4, amp A', 'CCD N4, amp B', 'CCD S5, amp A', 'CCD S5, amp B',
+            'CCD N5, amp A','CCD N5, amp B', 'CCD N3, amp A', 'CCD N3, amp B'))
 
 plt.figure('Full Width, Half Maximum')
 plt.title('FWHM vs Flux')
 plt.xlabel('Measured Flux (e-)')
 plt.ylabel('Full Width, Half Maximum (pixels)')
 # plt.ylim(3.75, 4.5)
-plt.legend(('CCD N9, amp A', 'CCD N9, amp B', ' CCD N4, amp A', 'CCD N4, amp B'))
+plt.legend(('CCD N9, amp A', 'CCD N9, amp B', ' CCD N4, amp A', 'CCD N4, amp B', 'CCD S5, amp A', 'CCD S5, amp B',
+            'CCD N5, amp A','CCD N5, amp B', 'CCD N3, amp A', 'CCD N3, amp B'))
 
 plt.show()

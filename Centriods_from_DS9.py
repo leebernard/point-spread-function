@@ -5,6 +5,7 @@ import numpy as np
 # import matplotlib
 import matplotlib.pyplot as plt
 import pickle
+import os
 
 # import re
 from astropy.io import fits
@@ -232,7 +233,7 @@ print(pyds9.ds9_targets())
 ds9 = pyds9.DS9()
 
 # load the region file
-# regionfile = '/home/lee/Documents/DECam_N4_B.reg'
+# regionfile = '/home/lee/Documents/ds9regions/DECam_N3_B.reg'
 # ds9.set('regions load ' + regionfile)
 # ds9.set('regions select all')
 
@@ -249,8 +250,8 @@ selected_regions = get_regions(get_data=False)
 selected_regions.sort(key=lambda region: np.sqrt(region.x_coord**2 + region.y_coord**2))
 
 # get the bias subtracted data
-bias_subtracted_data = bias_subtract(hdu[0], keyword='BIASSECA')
-gain = hdu[0].header['GAINA']
+bias_subtracted_data = bias_subtract(hdu[0], keyword='BIASSECB')
+gain = hdu[0].header['GAINB']
 
 # use the regions to produce apertures of thedata
 # also background subtract the data
@@ -425,8 +426,10 @@ archive = {'apertures': aperture_data, 'background': background_results, 'parame
            'param_cov': fit_cov, 'location': lower_left}
 
 # routine for saving the aperture data
-filename = '/home/lee/Documents/decam-S4-A-archive.pkl'
+filename = '/home/lee/Documents/decam-N3-B-archive.pkl'
 
+if os.path.isfile(filename):
+    input('File already exists. continue...?')
 with open(filename, mode='wb') as file:
     pickle.dump(archive, file)
 
