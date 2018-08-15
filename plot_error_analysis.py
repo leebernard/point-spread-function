@@ -75,8 +75,6 @@ for n, filename in enumerate(filename_list):
     # convert to array for convience
     aperture_size = np.asarray(aperture_size)
 
-
-
     # unpack the measured flux
     measured_flux = []
     for aperture in apertures:

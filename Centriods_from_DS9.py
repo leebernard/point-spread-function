@@ -252,6 +252,7 @@ selected_regions.sort(key=lambda region: np.sqrt(region.x_coord**2 + region.y_co
 # get the bias subtracted data
 bias_subtracted_data = bias_subtract(hdu[0], keyword='BIASSECB')
 gain = hdu[0].header['GAINB']
+print(f'GAIN: {gain}')
 
 # use the regions to produce apertures of thedata
 # also background subtract the data
@@ -415,7 +416,7 @@ for n, aperture in enumerate(aperture_list):
         # The width of the lines correspond to the width in that direction
         # axisarg[0][0].errorbar(x_center, y_center, xerr=x_width, yerr=y_width, ecolor='red')
 
-plt.show()
+
 
 
 # convert lower left values into a numpy array
@@ -426,13 +427,14 @@ archive = {'apertures': aperture_data, 'background': background_results, 'parame
            'param_cov': fit_cov, 'location': lower_left}
 
 # routine for saving the aperture data
-filename = '/home/lee/Documents/decam-N3-B-archive.pkl'
+filename = '/home/lee/Documents/decam-N16-B-archive.pkl'
 
 if os.path.isfile(filename):
     input('File already exists. continue...?')
 with open(filename, mode='wb') as file:
     pickle.dump(archive, file)
 
+plt.show()
 # Loading procedure
 # with open(filename, mode='rb') as file:
 #     archive = pickle.load(file)
