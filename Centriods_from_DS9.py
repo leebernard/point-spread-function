@@ -250,8 +250,8 @@ selected_regions = get_regions(get_data=False)
 selected_regions.sort(key=lambda region: np.sqrt(region.x_coord**2 + region.y_coord**2))
 
 # get the bias subtracted data
-bias_subtracted_data = bias_subtract(hdu[0], keyword='BIASSECB')
-gain = hdu[0].header['GAINB']
+bias_subtracted_data = bias_subtract(hdu[0], keyword='BIASSECA')
+gain = hdu[0].header['GAINA']
 print(f'GAIN: {gain}')
 
 # use the regions to produce apertures of thedata
@@ -427,7 +427,7 @@ archive = {'apertures': aperture_data, 'background': background_results, 'parame
            'param_cov': fit_cov, 'location': lower_left}
 
 # routine for saving the aperture data
-filename = '/home/lee/Documents/decam-N16-B-archive.pkl'
+filename = '/home/lee/Documents/decam-91s-S4-A-archive.pkl'
 
 if os.path.isfile(filename):
     input('File already exists. continue...?')

@@ -13,33 +13,61 @@ included, as well as the location of the lower left corner of each aperture
 
 flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta):
 """
-filename_list = []
+filename_listA = []
+filename_listB = []
 # convient holder for legend
 legend_list = []
-# filename_list.append('/home/lee/Documents/decam-N9-A-archive.pkl')
-# legend_list.append('CCD N9, amp A')
-filename_list.append('/home/lee/Documents/decam-N9-B-archive.pkl')
-legend_list.append('CCD N9, amp B')
-filename_list.append('/home/lee/Documents/decam-N4-A-archive.pkl')
-legend_list.append('CCD N4, amp A')
-filename_list.append('/home/lee/Documents/decam-N4-B-archive.pkl')
-legend_list.append('CCD N4, amp B')
-filename_list.append('/home/lee/Documents/decam-S5-A-archive.pkl')
-legend_list.append('CCD S5, amp A')
-filename_list.append('/home/lee/Documents/decam-S5-B-archive.pkl')
-legend_list.append('CCD S5, amp B')
-filename_list.append('/home/lee/Documents/decam-N5-A-archive.pkl')
-legend_list.append('CCD N5, amp A')
-# filename_list.append('/home/lee/Documents/decam-N5-B-archive.pkl')
-# legend_list.append('CCD N5, amp B')
-filename_list.append('/home/lee/Documents/decam-N3-A-archive.pkl')
-legend_list.append('CCD N3, amp A')
-filename_list.append('/home/lee/Documents/decam-N3-B-archive.pkl')
-legend_list.append('CCD N3, amp B')
-filename_list.append('/home/lee/Documents/decam-N16-A-archive.pkl')
-legend_list.append('CCD N16, amp A')
-filename_list.append('/home/lee/Documents/decam-N16-B-archive.pkl')
-legend_list.append('CCD N16, amp B')
+filename_listA.append('/home/lee/Documents/decam-94s-S4-A-archive.pkl')
+legend_list.append('S4 2:48UT-94s')
+filename_listB.append('/home/lee/Documents/decam-94s-S4-B-archive.pkl')
+# legend_list.append('94s-S4-B')
+filename_listA.append('/home/lee/Documents/decam-94s-N4-A-archive.pkl')
+legend_list.append('N4 2:48UT-94s')
+filename_listB.append('/home/lee/Documents/decam-94s-N4-B-archive.pkl')
+# legend_list.append('94s-N4')
+
+filename_listA.append('/home/lee/Documents/decam-91s-S4-A-archive.pkl')
+legend_list.append('S4 2:16UT-91s')
+filename_listB.append('/home/lee/Documents/decam-91s-S4-B-archive.pkl')
+# legend_list.append('91s-S4-B')
+filename_listA.append('/home/lee/Documents/decam-91s-N4-A-archive.pkl')
+legend_list.append('N4 2:16UT-91s')
+filename_listB.append('/home/lee/Documents/decam-91s-N4-B-archive.pkl')
+# legend_list.append('91s-N4-B')
+
+filename_listA.append('/home/lee/Documents/decam-102s-S4-A-archive.pkl')
+legend_list.append('S4 2:11UT-102s')
+filename_listB.append('/home/lee/Documents/decam-102s-S4-B-archive.pkl')
+# legend_list.append('102s-S4-B')
+filename_listA.append('/home/lee/Documents/decam-102s-N4-A-archive.pkl')
+legend_list.append('N4 2:11UT-102s')
+filename_listB.append('/home/lee/Documents/decam-102s-N4-B-archive.pkl')
+# legend_list.append('102s-N4-B')
+
+# # filename_list.append('/home/lee/Documents/decam-N9-A-archive.pkl')
+# # legend_list.append('CCD N9, amp A')
+# filename_list.append('/home/lee/Documents/decam-N9-B-archive.pkl')
+# legend_list.append('CCD N9, amp B')
+# filename_list.append('/home/lee/Documents/decam-N4-A-archive.pkl')
+# legend_list.append('CCD N4, amp A')
+# filename_list.append('/home/lee/Documents/decam-N4-B-archive.pkl')
+# legend_list.append('CCD N4, amp B')
+# filename_list.append('/home/lee/Documents/decam-S5-A-archive.pkl')
+# legend_list.append('CCD S5, amp A')
+# filename_list.append('/home/lee/Documents/decam-S5-B-archive.pkl')
+# legend_list.append('CCD S5, amp B')
+# filename_list.append('/home/lee/Documents/decam-N5-A-archive.pkl')
+# legend_list.append('CCD N5, amp A')
+# # filename_list.append('/home/lee/Documents/decam-N5-B-archive.pkl')
+# # legend_list.append('CCD N5, amp B')
+# filename_list.append('/home/lee/Documents/decam-N3-A-archive.pkl')
+# legend_list.append('CCD N3, amp A')
+# filename_list.append('/home/lee/Documents/decam-N3-B-archive.pkl')
+# legend_list.append('CCD N3, amp B')
+# filename_list.append('/home/lee/Documents/decam-N16-A-archive.pkl')
+# legend_list.append('CCD N16, amp A')
+# filename_list.append('/home/lee/Documents/decam-N16-B-archive.pkl')
+# legend_list.append('CCD N16, amp B')
 
 # ('CCD N9, amp A', 'CCD N9, amp B', ' CCD N4, amp A', 'CCD N4, amp B', 'CCD S5, amp A', 'CCD S5, amp B', 'CCD N5, amp A','CCD N5, amp B')
 
@@ -60,15 +88,23 @@ legend_list.append('CCD N16, amp B')
 # figures for plotting
 plt.figure('alpha values', figsize=(12, 10))
 plt.figure('beta values', figsize=(12, 10))
-plt.figure('Full Width, Half Maximum', figsize=(12, 10))
-for n, filename in enumerate(filename_list):
-    with open(filename, mode='rb') as file:
+plt.figure('FWHM', figsize=(12, 10))
+for n, filenameA in enumerate(filename_listA):
+    with open(filenameA, mode='rb') as file:
         archive = pickle.load(file)
 
     apertures = archive['apertures']
     parameters = archive['parameters']
     background = archive['background']
     cov = archive['param_cov']
+
+
+    with open(filename_listB[n], mode='rb') as file:
+        archive = pickle.load(file)
+    apertures.extend(archive['apertures'])
+    parameters.extend(archive['parameters'])
+    background.extend(archive['background'])
+    cov.extend(archive['param_cov'])
 
     parameters = np.asarray(parameters)
     background = np.asarray(background)
@@ -161,7 +197,7 @@ for n, filename in enumerate(filename_list):
     create a boolean mask that clips values from the plot that have a s/n less than 60
     """
     sn_clip_mask = np.zeros(max_pixel.size, dtype=bool)
-    threshold = 60
+    threshold = 100
     for m, pixel in enumerate(max_pixel):
         # if relative error is above the threshold, mask the corresponding parameter results
         if sn_ratio[m] < threshold:
@@ -176,29 +212,29 @@ for n, filename in enumerate(filename_list):
     plt.figure('beta values')  # select correct figure
     plt.errorbar(max_pixel, beta, yerr=sigma_beta, ls='None', marker='o', capsize=3)
 
-    plt.figure('Full Width, Half Maximum')
+    plt.figure('FWHM')
     plt.errorbar(max_pixel, fwhm, yerr=sigma_fwhm, ls='None', marker='o', capsize=3)
 
 plt.figure('alpha values')
 plt.title('Single Moffat Alpha Values(Half Width Half Max)')
-plt.xlabel('Measured Flux (e-)')
+plt.xlabel('Max pixel value (e-)')
 plt.ylabel('Average Width alpha (pixels)')
-plt.ylim(1.5, 2.5)
+# plt.ylim(1.5, 2.5)
 # plt.legend(('Frame 1', 'Frame 2', 'Frame 4', 'Frame 5', 'Frame 7', 'Frame 9', 'Frame 10', 'Frame 12', 'Frame 13', 'Frame 16'), loc='best')
 plt.legend(legend_list)
 
 plt.figure('beta values')
 plt.title('Single Moffat Beta Values')
 plt.ylabel(r'$\beta$ Value')
-plt.xlabel('Measured Flux (e-)')
-plt.ylim(3.5, 5.5)
+plt.xlabel('Max Pixel value (e-)')
+# plt.ylim(3.5, 5.5)
 plt.legend(legend_list)
 
-plt.figure('Full Width, Half Maximum')
-plt.title('FWHM vs Flux')
-plt.xlabel('Measured Flux (e-)')
+plt.figure('FWHM')
+plt.title('17/03/31 r filter RA:164-167arcmin DEC:2.5-4.5arcmin WCS')
+plt.xlabel('Max Pixel Value (e-)')
 plt.ylabel('Full Width, Half Maximum (pixels)')
-plt.ylim(3.5, 4.5)
+# plt.ylim(3, 4)
 plt.legend(legend_list)
 
 plt.show()

@@ -16,16 +16,31 @@ included, as well as the location of the lower left corner of each aperture
 # load the data
 filename_list = []
 
-filename_list.append('/home/lee/Documents/decam-N9-A-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-N9-B-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-N4-A-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-N4-B-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-S5-A-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-S5-B-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-N5-A-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-N5-B-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-N3-A-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-N3-B-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-94s-S4-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-94s-S4-B-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-94s-N4-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-94s-N4-B-archive.pkl')
+
+filename_list.append('/home/lee/Documents/decam-102s-S4-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-102s-S4-B-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-102s-N4-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-102s-N4-B-archive.pkl')
+
+filename_list.append('/home/lee/Documents/decam-91s-S4-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-91s-S4-B-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-91s-N4-A-archive.pkl')
+filename_list.append('/home/lee/Documents/decam-91s-N4-B-archive.pkl')
+
+# filename_list.append('/home/lee/Documents/decam-N9-A-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-N9-B-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-N4-A-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-N4-B-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-S5-A-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-S5-B-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-N5-A-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-N5-B-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-N3-A-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-N3-B-archive.pkl')
 
 #
 # filename_list.append('/home/lee/Documents/single-moffat-archive-im1.pkl')
