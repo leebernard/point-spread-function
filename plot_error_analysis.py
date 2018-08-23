@@ -4,6 +4,8 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
+from scipy.special import gammaincc
+
 """
 This is a script for plotting the results from fitting astronomical objects
 
@@ -13,23 +15,128 @@ included, as well as the location of the lower left corner of each aperture
 
 """
 
+
+
+def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta):
+    """Model of PSF using a single Moffat distribution, with elliptical parameters.
+
+    Includes a parameter for  axial alignment. This function flattens the
+    output, for curve fitting.
+
+    Parameters
+    ----------
+    indata: list
+        a list of 2 arrays. The first array is the x values per data point. The
+        second array is the y values per data point.
+    flux: float
+        Represents the total flux of the object
+    x0: float
+        horizontal location of the centroid
+    y0: float
+        vertical location of the centroid
+    beta: float
+        change in slope parameter
+    a: float
+        width parameter in the x direction
+    b: float
+        width parameter in the y direction
+    theta: float
+        angle of eccentricity
+    offset: float
+        estimate of background. Should be zero
+
+    Returns
+    -------
+    moffat_fun.ravel(): flattened array-like
+        array of data values produced from the x and y inputs. Flattened, for
+        curve fitting
+    """
+    x_in, y_in = indata
+
+    # moffat_fun = offset + flux * normalize * (1 + ((x - x0)**2/a**2 + (y - y0)**2/b**2))**(-beta)
+    A = np.cos(theta) ** 2 / a ** 2 + np.sin(theta) ** 2 / b ** 2
+    B = 2 * np.cos(theta) * np.sin(theta) * (1 / a ** 2 - 1 / b ** 2)
+    C = np.sin(theta) ** 2 / a ** 2 + np.cos(theta) ** 2 / b ** 2
+
+    def moffat_fun(x, y): return (1 + (A*(x - x0)**2 + B*(x - x0)*(y - y0) + C*(y - y0)**2)*(2**(1/beta) - 1))**(-beta)
+
+    # numerical normalization
+    # scale steps according to the size of the array.
+
+    x_final = np.amax(x_in) + 20
+    y_final = np.amax(y_in) + 20
+    x_start = np.amin(x_in) - 20
+    y_start = np.amin(y_in) - 20
+    # delta_x = .1
+    # delta_y = .1
+
+    h = 300
+    k = 300
+
+    delta_x = (x_final-x_start)/h
+    delta_y = (y_final-y_start)/k
+
+    # create a grid of x and y inputs
+    x_step, y_step = np.meshgrid(np.arange(x_start + delta_x/2, x_final + delta_x/2, delta_x), np.arange(y_start + delta_y/2, y_final + delta_y/2, delta_y))
+
+    # sum up the function evaluated at the steps, and multiply by the area of each step
+    normalize = np.sum(moffat_fun(x_step, y_step))*delta_x*delta_y
+    # normalize = 1
+
+    # forget that, just integrate it
+    # normalize, norm_err = dblquad(moffat_fun, -np.inf, np.inf, lambda x: -np.inf, lambda x: np.inf)
+
+    output = flux*moffat_fun(x_in, y_in)/normalize
+
+    return output.ravel()
+
+
 # load the data
-filename_list = []
+filename_listA = []
+filename_listB = []
+legend_list = []
 
-filename_list.append('/home/lee/Documents/decam-94s-S4-A-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-94s-S4-B-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-94s-N4-A-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-94s-N4-B-archive.pkl')
+filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-S4-A-archive.pkl')
+legend_list.append('S4 2:48UT-94s')
+filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-S4-B-archive.pkl')
+# legend_list.append('94s-S4-B')
+filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-N4-A-archive.pkl')
+legend_list.append('N4 2:48UT-94s')
+filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-N4-B-archive.pkl')
+# legend_list.append('94s-N4')
 
-filename_list.append('/home/lee/Documents/decam-102s-S4-A-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-102s-S4-B-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-102s-N4-A-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-102s-N4-B-archive.pkl')
+filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-S4-A-archive.pkl')
+legend_list.append('S4 2:16UT-91s')
+filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-S4-B-archive.pkl')
+# legend_list.append('91s-S4-B')
+filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-N4-A-archive.pkl')
+legend_list.append('N4 2:16UT-91s')
+filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-N4-B-archive.pkl')
+# legend_list.append('91s-N4-B')
 
-filename_list.append('/home/lee/Documents/decam-91s-S4-A-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-91s-S4-B-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-91s-N4-A-archive.pkl')
-filename_list.append('/home/lee/Documents/decam-91s-N4-B-archive.pkl')
+filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-S4-A-archive.pkl')
+legend_list.append('S4 2:11UT-102s')
+filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-S4-B-archive.pkl')
+# legend_list.append('102s-S4-B')
+filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-N4-A-archive.pkl')
+legend_list.append('N4 2:11UT-102s')
+filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-N4-B-archive.pkl')
+# legend_list.append('102s-N4-B'
+
+# filename_list.append('/home/lee/Documents/decam-94s-S4-A-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-94s-S4-B-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-94s-N4-A-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-94s-N4-B-archive.pkl')
+#
+# filename_list.append('/home/lee/Documents/decam-102s-S4-A-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-102s-S4-B-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-102s-N4-A-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-102s-N4-B-archive.pkl')
+#
+# filename_list.append('/home/lee/Documents/decam-91s-S4-A-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-91s-S4-B-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-91s-N4-A-archive.pkl')
+# filename_list.append('/home/lee/Documents/decam-91s-N4-B-archive.pkl')
 
 # filename_list.append('/home/lee/Documents/decam-N9-A-archive.pkl')
 # filename_list.append('/home/lee/Documents/decam-N9-B-archive.pkl')
@@ -58,15 +165,23 @@ filename_list.append('/home/lee/Documents/decam-91s-N4-B-archive.pkl')
 # list for storing relative error values
 relative_err_store = []
 plt.figure('Error vs sn ratio', figsize=(12, 10))
-for n, filename in enumerate(filename_list):
+plt.figure('Goodness of fit vs SN ratio', figsize=(12, 10))
+plt.figure('Goodness of fit vs Peak Pixel Value', figsize=(12, 10))
+for n, filename in enumerate(filename_listA):
     with open(filename, mode='rb') as file:
         archive = pickle.load(file)
-
-
     apertures = archive['apertures']
     background = archive['background']
     parameters = archive['parameters']
     cov = archive['param_cov']
+
+    # add the second half of the CCD
+    with open(filename_listB[n], mode='rb') as file:
+        archive = pickle.load(file)
+    apertures.extend(archive['apertures'])
+    parameters.extend(archive['parameters'])
+    background.extend(archive['background'])
+    cov.extend(archive['param_cov'])
 
     # convert to np array for convience
     parameters = np.asarray(parameters)
@@ -107,9 +222,6 @@ for n, filename in enumerate(filename_list):
 
     # plot the ratio of flux to background vs error
     ratio = measured_flux/noise
-    storage = []
-    for m, ratio_holder in enumerate(ratio):
-        storage.extend(np.ones(relative_err[m].size)*ratio_holder)
 
     plt.figure('Error vs sn ratio')
     plt.plot(ratio, relative_err[:,0], ls='None', marker='v', markersize=10, color='tab:blue')  # , label='Flux')
@@ -117,6 +229,50 @@ for n, filename in enumerate(filename_list):
     plt.plot(ratio, relative_err[:,5], ls='None', marker='+', markersize=12, color='tab:green')  # , label='b')
     plt.plot(ratio, relative_err[:,3], ls='None', marker='o', color='tab:purple')  # , label='beta')
 
+    """Chi squared calculations"""
+    chisq_list = []
+    chisq_norm_list = []
+    goodness_fit_list = []
+    peak_value = []
+    for n, aperture in enumerate(apertures):
+        observed = aperture.ravel()
+
+        # store the peak pixel value
+        peak_value.append(aperture.max())
+
+        y = np.arange(aperture.shape[0])
+        x = np.arange(aperture.shape[1])
+        x, y = np.meshgrid(x, y)
+
+        expected = flat_elliptical_Moffat((x, y), parameters[n][0], parameters[n][1], parameters[n][2],
+                                          parameters[n][3], parameters[n][4], parameters[n][5], parameters[n][6])
+
+        # calculated raw chi squared
+        chisq = sum(np.divide((observed - expected)**2, expected + bkg_dev[n]**2))
+
+        # degrees of freedom, 7 parameters
+        degrees_of_freedom = observed.size - 7
+
+        # normalized chi squared
+        chisq_norm = chisq/degrees_of_freedom
+
+        # probability that the discrepancies are random
+        goodness_fit = gammaincc(.5*degrees_of_freedom, .5*chisq)
+
+        # store the result
+        chisq_list.append(chisq)
+        chisq_norm_list.append(chisq_norm)
+        goodness_fit_list.append(goodness_fit)
+
+    # plot it
+    plt.figure('Goodness of fit vs SN ratio')
+    plt.plot(ratio, chisq_norm_list, ls='None', marker='o')
+
+    plt.figure('Goodness of fit vs Peak Pixel Value')
+    plt.plot(peak_value, chisq_norm_list, ls='None', marker='o')
+
+
+plt.figure('Error vs sn ratio')
 # plt.yscale('log')
 # plt.ylim(ymax=2)
 plt.ylim(0, .25)
@@ -126,6 +282,17 @@ plt.xlabel('Signal to Noise Ratio')
 plt.ylabel('Relative Error of Fit Parameters (Linear Scale)')
 plt.legend(('Flux', 'a', 'b', 'beta',), loc='best')
 
+plt.figure('Goodness of fit vs SN ratio')
+plt.xlabel('Signal to Noise Ratio')
+plt.ylabel('Normalized Chi Squared')
+plt.ylim(ymax=5.5)
+plt.legend(legend_list, loc='best')
+
+plt.figure('Goodness of fit vs Peak Pixel Value')
+plt.xlabel('Peak Pixel Value')
+plt.ylabel('Normalized Chi Squared')
+plt.ylim(ymax=5.5)
+plt.legend(legend_list, loc='best')
 
 f2 = plt.figure('Error histogram')
 hist_data = np.asarray(relative_err_store)

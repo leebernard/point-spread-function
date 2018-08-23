@@ -12,6 +12,7 @@ from astropy.io import fits
 import pyds9
 from astropy.visualization import SqrtStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
+from scipy.special import gammaincc
 # import needed functions from the toolbox
 from ccd_tools import bias_subtract, background_subtract, get_regions
 
