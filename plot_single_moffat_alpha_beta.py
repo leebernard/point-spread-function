@@ -17,31 +17,31 @@ filename_listA = []
 filename_listB = []
 # convient holder for legend
 legend_list = []
-filename_listA.append('/home/lee/Documents/decam-94s-S4-A-archive.pkl')
+filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-S4-A-archive.pkl')
 legend_list.append('S4 2:48UT-94s')
-filename_listB.append('/home/lee/Documents/decam-94s-S4-B-archive.pkl')
+filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-S4-B-archive.pkl')
 # legend_list.append('94s-S4-B')
-filename_listA.append('/home/lee/Documents/decam-94s-N4-A-archive.pkl')
+filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-N4-A-archive.pkl')
 legend_list.append('N4 2:48UT-94s')
-filename_listB.append('/home/lee/Documents/decam-94s-N4-B-archive.pkl')
+filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-N4-B-archive.pkl')
 # legend_list.append('94s-N4')
 
-filename_listA.append('/home/lee/Documents/decam-91s-S4-A-archive.pkl')
+filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-S4-A-archive.pkl')
 legend_list.append('S4 2:16UT-91s')
-filename_listB.append('/home/lee/Documents/decam-91s-S4-B-archive.pkl')
+filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-S4-B-archive.pkl')
 # legend_list.append('91s-S4-B')
-filename_listA.append('/home/lee/Documents/decam-91s-N4-A-archive.pkl')
+filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-N4-A-archive.pkl')
 legend_list.append('N4 2:16UT-91s')
-filename_listB.append('/home/lee/Documents/decam-91s-N4-B-archive.pkl')
+filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-N4-B-archive.pkl')
 # legend_list.append('91s-N4-B')
 
-filename_listA.append('/home/lee/Documents/decam-102s-S4-A-archive.pkl')
+filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-S4-A-archive.pkl')
 legend_list.append('S4 2:11UT-102s')
-filename_listB.append('/home/lee/Documents/decam-102s-S4-B-archive.pkl')
+filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-S4-B-archive.pkl')
 # legend_list.append('102s-S4-B')
-filename_listA.append('/home/lee/Documents/decam-102s-N4-A-archive.pkl')
+filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-N4-A-archive.pkl')
 legend_list.append('N4 2:11UT-102s')
-filename_listB.append('/home/lee/Documents/decam-102s-N4-B-archive.pkl')
+filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-N4-B-archive.pkl')
 # legend_list.append('102s-N4-B')
 
 # # filename_list.append('/home/lee/Documents/decam-N9-A-archive.pkl')
@@ -114,8 +114,10 @@ for n, filenameA in enumerate(filename_listA):
     ab_cov = []
     abeta_cov = []
     bbeta_cov = []
+    # 95% confidence interval for 7 parameters
+    delta_chisqrd = 14.1
     for cov_mat in cov:
-        error_list.append(np.sqrt(np.diag(cov_mat)))
+        error_list.append(np.sqrt(np.diag(cov_mat)*delta_chisqrd))
 
         # unpack the covariance between the a and b parameters
         ab_cov.append(cov_mat[4][5])
