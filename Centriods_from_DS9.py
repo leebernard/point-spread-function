@@ -12,7 +12,8 @@ from astropy.io import fits
 import pyds9
 from astropy.visualization import SqrtStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
-from scipy.special import gammaincc
+from scipy.optimize import curve_fit
+# from scipy.special import gammaincc
 # import needed functions from the toolbox
 from ccd_tools import bias_subtract, background_subtract, get_regions
 
@@ -278,7 +279,7 @@ fit_results = []
 fit_cov = []
 
 # generate each curve fit
-from scipy.optimize import curve_fit
+
 for n, aperture in enumerate(aperture_list):
 
     print('---------------------')

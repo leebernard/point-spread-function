@@ -91,37 +91,38 @@ def flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta):
     return output.ravel()
 
 
-# load the data
-filename_listA = []
-filename_listB = []
-legend_list = []
 
-filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-S4-A-archive.pkl')
-legend_list.append('S4 2:48UT-94s')
-filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-S4-B-archive.pkl')
-# legend_list.append('94s-S4-B')
-filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-N4-A-archive.pkl')
-legend_list.append('N4 2:48UT-94s')
-filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-N4-B-archive.pkl')
-# legend_list.append('94s-N4')
+# filename_listA = []
+# filename_listB = []
+# legend_list = []
 
-filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-S4-A-archive.pkl')
-legend_list.append('S4 2:16UT-91s')
-filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-S4-B-archive.pkl')
-# legend_list.append('91s-S4-B')
-filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-N4-A-archive.pkl')
-legend_list.append('N4 2:16UT-91s')
-filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-N4-B-archive.pkl')
-# legend_list.append('91s-N4-B')
-
-filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-S4-A-archive.pkl')
-legend_list.append('S4 2:11UT-102s')
-filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-S4-B-archive.pkl')
-# legend_list.append('102s-S4-B')
-filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-N4-A-archive.pkl')
-legend_list.append('N4 2:11UT-102s')
-filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-N4-B-archive.pkl')
-# legend_list.append('102s-N4-B'
+filename = '/home/lee/Documents/decam-ccds-N4-S4-20170331-unbiased-archive.pkl'
+# filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-S4-A-archive.pkl')
+# legend_list.append('S4 2:48UT-94s')
+# filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-S4-B-archive.pkl')
+# # legend_list.append('94s-S4-B')
+# filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-N4-A-archive.pkl')
+# legend_list.append('N4 2:48UT-94s')
+# filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-N4-B-archive.pkl')
+# # legend_list.append('94s-N4')
+#
+# filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-S4-A-archive.pkl')
+# legend_list.append('S4 2:16UT-91s')
+# filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-S4-B-archive.pkl')
+# # legend_list.append('91s-S4-B')
+# filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-N4-A-archive.pkl')
+# legend_list.append('N4 2:16UT-91s')
+# filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-N4-B-archive.pkl')
+# # legend_list.append('91s-N4-B')
+#
+# filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-S4-A-archive.pkl')
+# legend_list.append('S4 2:11UT-102s')
+# filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-S4-B-archive.pkl')
+# # legend_list.append('102s-S4-B')
+# filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-N4-A-archive.pkl')
+# legend_list.append('N4 2:11UT-102s')
+# filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-N4-B-archive.pkl')
+# # legend_list.append('102s-N4-B'
 
 # filename_list.append('/home/lee/Documents/decam-94s-S4-A-archive.pkl')
 # filename_list.append('/home/lee/Documents/decam-94s-S4-B-archive.pkl')
@@ -149,7 +150,6 @@ filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102
 # filename_list.append('/home/lee/Documents/decam-N3-A-archive.pkl')
 # filename_list.append('/home/lee/Documents/decam-N3-B-archive.pkl')
 
-#
 # filename_list.append('/home/lee/Documents/single-moffat-archive-im1.pkl')
 # filename_list.append('/home/lee/Documents/single-moffat-archive-im2.pkl')
 # filename_list.append('/home/lee/Documents/single-moffat-archive-im4.pkl')
@@ -162,26 +162,37 @@ filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102
 # filename_list.append('/home/lee/Documents/single-moffat-archive-im13.pkl')
 # filename_list.append('/home/lee/Documents/sample-single-moffat-im16.pkl')
 
+# open the archive
+with open(filename, mode='rb') as file:
+    archive_list = pickle.load(file)
+
+# split the archived data, so that it can be paired up
+archive_listA = archive_list[::2]
+archive_listB = archive_list[1::2]
+
 # list for storing relative error values
 relative_err_store = []
+# list for storing the legend names
+legend_list = []
 plt.figure('Error vs sn ratio', figsize=(12, 10))
 plt.figure('Goodness of fit vs SN ratio', figsize=(12, 10))
 plt.figure('Goodness of fit vs Peak Pixel Value', figsize=(12, 10))
-for n, filename in enumerate(filename_listA):
-    with open(filename, mode='rb') as file:
-        archive = pickle.load(file)
+for n, archive in enumerate(archive_listA):
+    # with open(filename, mode='rb') as file:
+    #     archive = pickle.load(file)
     apertures = archive['apertures']
     background = archive['background']
     parameters = archive['parameters']
     cov = archive['param_cov']
-
+    legend_list.append(archive['dataset_name'])
     # add the second half of the CCD
-    with open(filename_listB[n], mode='rb') as file:
-        archive = pickle.load(file)
-    apertures.extend(archive['apertures'])
-    parameters.extend(archive['parameters'])
-    background.extend(archive['background'])
-    cov.extend(archive['param_cov'])
+    # with open(filename_listB[n], mode='rb') as file:
+    #     archive = pickle.load(file)
+    with archive_listB[n] as archiveB:
+        apertures.extend(archiveB['apertures'])
+        parameters.extend(archiveB['parameters'])
+        background.extend(archiveB['background'])
+        cov.extend(archiveB['param_cov'])
 
     # convert to np array for convience
     parameters = np.asarray(parameters)
