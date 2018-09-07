@@ -188,11 +188,11 @@ for n, archive in enumerate(archive_listA):
     # add the second half of the CCD
     # with open(filename_listB[n], mode='rb') as file:
     #     archive = pickle.load(file)
-    with archive_listB[n] as archiveB:
-        apertures.extend(archiveB['apertures'])
-        parameters.extend(archiveB['parameters'])
-        background.extend(archiveB['background'])
-        cov.extend(archiveB['param_cov'])
+    archiveB = archive_listB[n]
+    apertures.extend(archiveB['apertures'])
+    parameters.extend(archiveB['parameters'])
+    background.extend(archiveB['background'])
+    cov.extend(archiveB['param_cov'])
 
     # convert to np array for convience
     parameters = np.asarray(parameters)
@@ -225,6 +225,7 @@ for n, archive in enumerate(archive_listA):
 
     # calculate signal to noise ratio
     noise = np.sqrt(measured_flux + aperture_size * background)
+    ratio = measured_flux/noise
 
     # extract the relative error, defined as deviation/value
     relative_err = errors/parameters
@@ -232,7 +233,7 @@ for n, archive in enumerate(archive_listA):
     relative_err_store.extend(relative_err[:, 0:6].flatten())
 
     # plot the ratio of flux to background vs error
-    ratio = measured_flux/noise
+
 
     plt.figure('Error vs sn ratio')
     plt.plot(ratio, relative_err[:,0], ls='None', marker='v', markersize=10, color='tab:blue')  # , label='Flux')

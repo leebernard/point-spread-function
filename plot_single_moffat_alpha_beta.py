@@ -13,35 +13,35 @@ included, as well as the location of the lower left corner of each aperture
 
 flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta):
 """
-filename_listA = []
-filename_listB = []
-# convient holder for legend
-legend_list = []
-filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-S4-A-archive.pkl')
-legend_list.append('S4 2:48UT-94s')
-filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-S4-B-archive.pkl')
-# legend_list.append('94s-S4-B')
-filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-N4-A-archive.pkl')
-legend_list.append('N4 2:48UT-94s')
-filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-N4-B-archive.pkl')
-# legend_list.append('94s-N4')
-
-filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-S4-A-archive.pkl')
-legend_list.append('S4 2:16UT-91s')
-filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-S4-B-archive.pkl')
-# legend_list.append('91s-S4-B')
-filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-N4-A-archive.pkl')
-legend_list.append('N4 2:16UT-91s')
-filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-N4-B-archive.pkl')
-# legend_list.append('91s-N4-B')
-
-filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-S4-A-archive.pkl')
-legend_list.append('S4 2:11UT-102s')
-filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-S4-B-archive.pkl')
-# legend_list.append('102s-S4-B')
-filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-N4-A-archive.pkl')
-legend_list.append('N4 2:11UT-102s')
-filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-N4-B-archive.pkl')
+# filename_listA = []
+# filename_listB = []
+# # convient holder for legend
+# legend_list = []
+# filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-S4-A-archive.pkl')
+# legend_list.append('S4 2:48UT-94s')
+# filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-S4-B-archive.pkl')
+# # legend_list.append('94s-S4-B')
+# filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-N4-A-archive.pkl')
+# legend_list.append('N4 2:48UT-94s')
+# filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-94s-N4-B-archive.pkl')
+# # legend_list.append('94s-N4')
+#
+# filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-S4-A-archive.pkl')
+# legend_list.append('S4 2:16UT-91s')
+# filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-S4-B-archive.pkl')
+# # legend_list.append('91s-S4-B')
+# filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-N4-A-archive.pkl')
+# legend_list.append('N4 2:16UT-91s')
+# filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-91s-N4-B-archive.pkl')
+# # legend_list.append('91s-N4-B')
+#
+# filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-S4-A-archive.pkl')
+# legend_list.append('S4 2:11UT-102s')
+# filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-S4-B-archive.pkl')
+# # legend_list.append('102s-S4-B')
+# filename_listA.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-N4-A-archive.pkl')
+# legend_list.append('N4 2:11UT-102s')
+# filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102s-N4-B-archive.pkl')
 # legend_list.append('102s-N4-B')
 
 # # filename_list.append('/home/lee/Documents/decam-N9-A-archive.pkl')
@@ -85,10 +85,21 @@ filename_listB.append('/home/lee/Documents/decman-fit-archive-20170331/decam-102
 # filename_list.append('/home/lee/Documents/single-moffat-archive-im13.pkl')
 # filename_list.append('/home/lee/Documents/single-moffat-archive-im16.pkl')
 
+filename = '/home/lee/Documents/decam-ccds-N4-S4-20170331-unbiased-archive.pkl'
+# open the archive
+with open(filename, mode='rb') as file:
+    archive_list = pickle.load(file)
+
+# split the archived data, so that it can be paired up
+archive_listA = archive_list[::2]
+archive_listB = archive_list[1::2]
 # figures for plotting
 plt.figure('alpha values', figsize=(12, 10))
 plt.figure('beta values', figsize=(12, 10))
 plt.figure('FWHM', figsize=(12, 10))
+plt.figure('angle vs eccentricity',figsize=(12, 10))
+
+'''
 for n, filenameA in enumerate(filename_listA):
     with open(filenameA, mode='rb') as file:
         archive = pickle.load(file)
@@ -105,7 +116,25 @@ for n, filenameA in enumerate(filename_listA):
     parameters.extend(archive['parameters'])
     background.extend(archive['background'])
     cov.extend(archive['param_cov'])
-
+'''
+legend_list = []
+angle_values_list = []
+for n, archive in enumerate(archive_listA):
+    # with open(filename, mode='rb') as file:
+    #     archive = pickle.load(file)
+    apertures = archive['apertures']
+    background = archive['background']
+    parameters = archive['parameters']
+    cov = archive['param_cov']
+    legend_list.append(archive['dataset_name'])
+    # add the second half of the CCD
+    # with open(filename_listB[n], mode='rb') as file:
+    #     archive = pickle.load(file)
+    archiveB = archive_listB[n]
+    apertures.extend(archiveB['apertures'])
+    parameters.extend(archiveB['parameters'])
+    background.extend(archiveB['background'])
+    cov.extend(archiveB['param_cov'])
     parameters = np.asarray(parameters)
     background = np.asarray(background)
 
@@ -138,6 +167,7 @@ for n, filenameA in enumerate(filename_listA):
     sigma_a = error_list[:, 4]
     sigma_b = error_list[:, 5]
     sigma_beta = error_list[:, 3]
+    sigma_theta = error_list[:, -1]
 
 
     # unpack the measured Flux
@@ -206,7 +236,9 @@ for n, filenameA in enumerate(filename_listA):
             sn_clip_mask[m] = True
     # apply the mask to the x values. this surpresses plotting of the value
     max_pixel = np.ma.array(max_pixel, mask=sn_clip_mask)
-
+    # apply the mask to the angle values, and then store them for histograming
+    angle_values = (np.ma.array(parameters[:, -1], mask=sn_clip_mask))
+    angle_values_list.extend(angle_values)
     # plot the stuff
     plt.figure('alpha values')  # select correct figure
     plt.errorbar(max_pixel, alpha, yerr=sigma_alpha, ls='None', marker='o', capsize=3)
@@ -216,6 +248,9 @@ for n, filenameA in enumerate(filename_listA):
 
     plt.figure('FWHM')
     plt.errorbar(max_pixel, fwhm, yerr=sigma_fwhm, ls='None', marker='o', capsize=3)
+
+    plt.figure('angle vs eccentricity')
+    plt.errorbar(abs(a_param-b_param), angle_values * 57.2958, yerr=sigma_theta, ls='None', marker='o', capsize=3)
 
 plt.figure('alpha values')
 plt.title('Single Moffat Alpha Values(Half Width Half Max)')
@@ -239,4 +274,13 @@ plt.ylabel('Full Width, Half Maximum (pixels)')
 # plt.ylim(3, 4)
 plt.legend(legend_list)
 
+plt.figure('angle vs eccentricity')
+plt.title('Angle vs Eccentricity')
+plt.xlabel('Major axis minus minor axis (a-b)')
+plt.ylabel('Angle of Eccentricity (degrees)')
+
+plt.figure('angle histogram')
+plt.title('Histogram of eccentricity angles')
+bins = np.linspace(0, 90, num=91)
+plt.hist(np.asarray(angle_values_list) * 57.2958, bins=bins)  # angles converted from radians to degrees
 plt.show()
