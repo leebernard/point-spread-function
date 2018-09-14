@@ -97,7 +97,8 @@ archive_listB = archive_list[1::2]
 plt.figure('alpha values', figsize=(12, 10))
 plt.figure('beta values', figsize=(12, 10))
 plt.figure('FWHM', figsize=(12, 10))
-plt.figure('angle vs eccentricity',figsize=(12, 10))
+plt.figure('angle vs peak pixel value',figsize=(12, 10))
+plt.figure('Eccentricity vs peak pixel value', figsize=(12, 10))
 
 '''
 for n, filenameA in enumerate(filename_listA):
@@ -127,7 +128,7 @@ for n, archive in enumerate(archive_listA):
     parameters = archive['parameters']
     cov = archive['param_cov']
     legend_list.append(archive['dataset_name'])
-    # add the second half of the CCD
+    # add the second half of the CCD. Extend extends the current entries, rather than adding new ones.
     # with open(filename_listB[n], mode='rb') as file:
     #     archive = pickle.load(file)
     archiveB = archive_listB[n]
@@ -201,8 +202,7 @@ for n, archive in enumerate(archive_listA):
 
 
     # unpack the width parameters a and b
-    # unpack the beta1 parameter
-    # unpack the beta2 parameter
+    # unpack the beta parameter
     a_param = []
     b_param = []
     beta = []
@@ -220,10 +220,17 @@ for n, archive in enumerate(archive_listA):
     alpha = np.sqrt(a_param * b_param)
     # calculate the deviations for alpha
     sigma_alpha = .5 * np.sqrt(b_param / a_param * (sigma_a ** 2) + a_param / b_param * (sigma_b ** 2) + 2 * ab_cov)
+    # make a linear fit
+    poly_coeffs, poly_cov = np.polyfit(max_pixel, alpha, deg=1, w=1/sigma_alpha, cov=True)
+    print(p)
+    # make sets of data to show the fit
+    x_values = np.arange(max_pixel.min(), max_pixel.max())
+    y_values = poly_coeffs[0]*x_values + poly_coeffs[1]
 
     # calculate the Full Width, Half Max
     fwhm = 2*alpha
     sigma_fwhm = 2*sigma_alpha
+
 
     """
     create a boolean mask that clips values from the plot that have a s/n less than 60
@@ -242,6 +249,7 @@ for n, archive in enumerate(archive_listA):
     # plot the stuff
     plt.figure('alpha values')  # select correct figure
     plt.errorbar(max_pixel, alpha, yerr=sigma_alpha, ls='None', marker='o', capsize=3)
+    plt.plot(x_values, y_values)
 
     plt.figure('beta values')  # select correct figure
     plt.errorbar(max_pixel, beta, yerr=sigma_beta, ls='None', marker='o', capsize=3)
@@ -249,9 +257,11 @@ for n, archive in enumerate(archive_listA):
     plt.figure('FWHM')
     plt.errorbar(max_pixel, fwhm, yerr=sigma_fwhm, ls='None', marker='o', capsize=3)
 
-    plt.figure('angle vs eccentricity')
-    plt.errorbar(abs(a_param-b_param), angle_values * 57.2958, yerr=sigma_theta, ls='None', marker='o', capsize=3)
+    plt.figure('angle vs peak pixel value')
+    plt.errorbar(max_pixel, angle_values * 57.2958, yerr=sigma_theta * 57.2958, ls='None', marker='o', capsize=3)
 
+    plt.figure('Eccentricity vs peak pixel value')
+    plt.errorbar(max_pixel, abs(a_param-b_param)/alpha, yerr=sigma_alpha/alpha, ls='None', marker='o', capsize=3)
 plt.figure('alpha values')
 plt.title('Single Moffat Alpha Values(Half Width Half Max)')
 plt.xlabel('Max pixel value (e-)')
@@ -274,10 +284,17 @@ plt.ylabel('Full Width, Half Maximum (pixels)')
 # plt.ylim(3, 4)
 plt.legend(legend_list)
 
-plt.figure('angle vs eccentricity')
-plt.title('Angle vs Eccentricity')
-plt.xlabel('Major axis minus minor axis (a-b)')
+plt.figure('angle vs peak pixel value')
+plt.title('Angle vs Peak pixel Value')
+plt.xlabel('Peak Pixel value (e-)')
 plt.ylabel('Angle of Eccentricity (degrees)')
+plt.ylim(-10, 90)
+
+plt.figure('Eccentricity vs peak pixel value')
+plt.title('Eccentricity vs Peak Pixel Value')
+plt.xlabel('Peak Pixel Value (e-)')
+plt.ylabel('Percent Eccentricity (a-b)/HWHM')
+# plt.ylim(-.1, .2)
 
 plt.figure('angle histogram')
 plt.title('Histogram of eccentricity angles')
