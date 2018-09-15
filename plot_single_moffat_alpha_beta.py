@@ -120,6 +120,11 @@ for n, filenameA in enumerate(filename_listA):
 '''
 legend_list = []
 angle_values_list = []
+
+# retrieve default colors
+prop_cycle = plt.rcParams['axes.prop_cycle']
+colors = iter(prop_cycle.by_key()['color'])
+
 for n, archive in enumerate(archive_listA):
     # with open(filename, mode='rb') as file:
     #     archive = pickle.load(file)
@@ -216,21 +221,6 @@ for n, archive in enumerate(archive_listA):
     b_param = np.asarray(b_param)
     beta = np.asarray(beta)
 
-    # calculate the average width, alpha
-    alpha = np.sqrt(a_param * b_param)
-    # calculate the deviations for alpha
-    sigma_alpha = .5 * np.sqrt(b_param / a_param * (sigma_a ** 2) + a_param / b_param * (sigma_b ** 2) + 2 * ab_cov)
-    # make a linear fit
-    poly_coeffs, poly_cov = np.polyfit(max_pixel, alpha, deg=1, w=1/sigma_alpha, cov=True)
-    print(p)
-    # make sets of data to show the fit
-    x_values = np.arange(max_pixel.min(), max_pixel.max())
-    y_values = poly_coeffs[0]*x_values + poly_coeffs[1]
-
-    # calculate the Full Width, Half Max
-    fwhm = 2*alpha
-    sigma_fwhm = 2*sigma_alpha
-
 
     """
     create a boolean mask that clips values from the plot that have a s/n less than 60
@@ -243,25 +233,43 @@ for n, archive in enumerate(archive_listA):
             sn_clip_mask[m] = True
     # apply the mask to the x values. this surpresses plotting of the value
     max_pixel = np.ma.array(max_pixel, mask=sn_clip_mask)
+    measured_flux = np.ma.array(measured_flux, mask=sn_clip_mask)
     # apply the mask to the angle values, and then store them for histograming
     angle_values = (np.ma.array(parameters[:, -1], mask=sn_clip_mask))
     angle_values_list.extend(angle_values)
+
+    # calculate the average width, alpha
+    alpha = np.sqrt(a_param * b_param)
+    # calculate the deviations for alpha
+    sigma_alpha = .5 * np.sqrt(b_param / a_param * (sigma_a ** 2) + a_param / b_param * (sigma_b ** 2) + 2 * ab_cov)
+    # make a linear fit
+    poly_coeffs, poly_cov = np.polyfit(measured_flux, alpha, deg=1, w=1/sigma_alpha, cov=True)
+    print(poly_coeffs)
+    # make sets of data to show the fit
+    x_values = np.arange(measured_flux.min(), measured_flux.max())
+    y_values = poly_coeffs[0]*x_values + poly_coeffs[1]
+
+    # calculate the Full Width, Half Max
+    fwhm = 2*alpha
+    sigma_fwhm = 2*sigma_alpha
+
     # plot the stuff
+    color = next(colors)
     plt.figure('alpha values')  # select correct figure
-    plt.errorbar(max_pixel, alpha, yerr=sigma_alpha, ls='None', marker='o', capsize=3)
-    plt.plot(x_values, y_values)
+    plt.errorbar(measured_flux, alpha, yerr=sigma_alpha, ls='None', marker='o', capsize=3, color=color)
+    plt.plot(x_values, y_values, color=color)
 
     plt.figure('beta values')  # select correct figure
-    plt.errorbar(max_pixel, beta, yerr=sigma_beta, ls='None', marker='o', capsize=3)
+    plt.errorbar(measured_flux, beta, yerr=sigma_beta, ls='None', marker='o', capsize=3)
 
     plt.figure('FWHM')
-    plt.errorbar(max_pixel, fwhm, yerr=sigma_fwhm, ls='None', marker='o', capsize=3)
+    plt.errorbar(measured_flux, fwhm, yerr=sigma_fwhm, ls='None', marker='o', capsize=3)
 
     plt.figure('angle vs peak pixel value')
-    plt.errorbar(max_pixel, angle_values * 57.2958, yerr=sigma_theta * 57.2958, ls='None', marker='o', capsize=3)
+    plt.errorbar(measured_flux, angle_values * 57.2958, yerr=sigma_theta * 57.2958, ls='None', marker='o', capsize=3)
 
     plt.figure('Eccentricity vs peak pixel value')
-    plt.errorbar(max_pixel, abs(a_param-b_param)/alpha, yerr=sigma_alpha/alpha, ls='None', marker='o', capsize=3)
+    plt.errorbar(measured_flux, (a_param-b_param)/alpha, yerr=sigma_alpha/alpha, ls='None', marker='o', capsize=3)
 plt.figure('alpha values')
 plt.title('Single Moffat Alpha Values(Half Width Half Max)')
 plt.xlabel('Max pixel value (e-)')
@@ -273,31 +281,33 @@ plt.legend(legend_list)
 plt.figure('beta values')
 plt.title('Single Moffat Beta Values')
 plt.ylabel(r'$\beta$ Value')
-plt.xlabel('Max Pixel value (e-)')
+plt.xlabel('Measured Flux of Object (e-)')
 # plt.ylim(3.5, 5.5)
 plt.legend(legend_list)
 
 plt.figure('FWHM')
 plt.title('17/03/31 r filter RA:164-167arcmin DEC:2.5-4.5arcmin WCS')
-plt.xlabel('Max Pixel Value (e-)')
+plt.xlabel('Measured Flux of Object (e-)')
 plt.ylabel('Full Width, Half Maximum (pixels)')
 # plt.ylim(3, 4)
 plt.legend(legend_list)
 
 plt.figure('angle vs peak pixel value')
 plt.title('Angle vs Peak pixel Value')
-plt.xlabel('Peak Pixel value (e-)')
+plt.xlabel('Measured Flux of Object (e-)')
 plt.ylabel('Angle of Eccentricity (degrees)')
 plt.ylim(-10, 90)
 
 plt.figure('Eccentricity vs peak pixel value')
 plt.title('Eccentricity vs Peak Pixel Value')
-plt.xlabel('Peak Pixel Value (e-)')
+plt.xlabel('Measured Flux of Object (e-)')
 plt.ylabel('Percent Eccentricity (a-b)/HWHM')
 # plt.ylim(-.1, .2)
 
-plt.figure('angle histogram')
-plt.title('Histogram of eccentricity angles')
-bins = np.linspace(0, 90, num=91)
-plt.hist(np.asarray(angle_values_list) * 57.2958, bins=bins)  # angles converted from radians to degrees
+# # commented out the histogram, cause it takes too long
+# plt.figure('angle histogram')
+# plt.title('Histogram of eccentricity angles')
+# bins = np.linspace(0, 90, num=91)
+# plt.hist(np.asarray(angle_values_list) * 57.2958, bins=bins)  # angles converted from radians to degrees
+
 plt.show()

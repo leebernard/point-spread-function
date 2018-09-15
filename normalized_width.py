@@ -27,6 +27,7 @@ archive_listB = archive_list[1::2]  # starting at 1
 
 legend_list = []
 plt.figure('delta_sigma/sigma_0', figsize=(12, 10))
+plt.figure('max pixel vs measured flux', figsize=(12, 10))
 for archiveA, archiveB in zip(archive_listA, archive_listB):
     # unpack archive A
     apertures = archiveA['apertures']
@@ -147,15 +148,26 @@ for archiveA, archiveB in zip(archive_listA, archive_listB):
     print(poly_coeffs)
     delta_hfhm_normalized = (masked_alpha-hfhm_0)/hfhm_0
 
+    # plot the delta_sigma/sigma_0
     plt.figure('delta_sigma/sigma_0')
-    plt.scatter(max_pixel, delta_hfhm_normalized)
-    # plt.scatter(measured_flux, delta_hfhm_normalized)
+    # plt.scatter(max_pixel, delta_hfhm_normalized)
+    plt.scatter(measured_flux, delta_hfhm_normalized)
+
+    # plot the max pixel as a function of measured flux
+    plt.figure('max pixel vs measured flux')
+    plt.scatter(measured_flux, max_pixel)
 
 plt.figure('delta_sigma/sigma_0')
 plt.title('Delta Sigma over Sigma')
-plt.xlabel('Max Pixel Value (e-)')
-# plt.xlabel('Measured Flux (e-)')
+# plt.xlabel('Max Pixel Value (e-)')
+plt.xlabel('Measured Flux (e-)')
 plt.ylabel('percent change in HWHM (%)')
+plt.legend(legend_list, loc='best')
+
+plt.figure('max pixel vs measured flux')
+plt.title('Max pixel as a function of measured flux')
+plt.xlabel('Measured Flux of Aperture (e-)')
+plt.ylabel('Max pixel of Aperture (e-)')
 plt.legend(legend_list, loc='best')
 
 plt.show()
