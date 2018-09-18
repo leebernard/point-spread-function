@@ -85,7 +85,8 @@ flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta):
 # filename_list.append('/home/lee/Documents/single-moffat-archive-im13.pkl')
 # filename_list.append('/home/lee/Documents/single-moffat-archive-im16.pkl')
 
-filename = '/home/lee/Documents/decam-ccds-N4-S4-20170331-unbiased-archive.pkl'
+# filename = '/home/lee/Documents/decam-ccds-N4-S4-20170331-unbiased-archive.pkl'
+filename = '/home/lee/Documents/decam-ccds-N4-S4-20170331-unbiased-forcedangle-archive.pkl'
 # open the archive
 with open(filename, mode='rb') as file:
     archive_list = pickle.load(file)
@@ -97,7 +98,7 @@ archive_listB = archive_list[1::2]
 plt.figure('alpha values', figsize=(12, 10))
 plt.figure('beta values', figsize=(12, 10))
 plt.figure('FWHM', figsize=(12, 10))
-plt.figure('angle vs peak pixel value',figsize=(12, 10))
+# plt.figure('angle vs peak pixel value',figsize=(12, 10))
 plt.figure('Eccentricity vs peak pixel value', figsize=(12, 10))
 
 '''
@@ -149,8 +150,10 @@ for n, archive in enumerate(archive_listA):
     ab_cov = []
     abeta_cov = []
     bbeta_cov = []
-    # 95% confidence interval for 7 parameters
-    delta_chisqrd = 14.1
+    # # 95% confidence interval for 7 parameters
+    # delta_chisqrd = 14.1
+    # 95% confidence interval for 6 parameters
+    delta_chisqrd = 12.8
     for cov_mat in cov:
         error_list.append(np.sqrt(np.diag(cov_mat)*delta_chisqrd))
 
@@ -234,9 +237,9 @@ for n, archive in enumerate(archive_listA):
     # apply the mask to the x values. this surpresses plotting of the value
     max_pixel = np.ma.array(max_pixel, mask=sn_clip_mask)
     measured_flux = np.ma.array(measured_flux, mask=sn_clip_mask)
-    # apply the mask to the angle values, and then store them for histograming
-    angle_values = (np.ma.array(parameters[:, -1], mask=sn_clip_mask))
-    angle_values_list.extend(angle_values)
+    # # apply the mask to the angle values, and then store them for histograming
+    # angle_values = (np.ma.array(parameters[:, -1], mask=sn_clip_mask))
+    # angle_values_list.extend(angle_values)
 
     # calculate the average width, alpha
     alpha = np.sqrt(a_param * b_param)
@@ -265,14 +268,14 @@ for n, archive in enumerate(archive_listA):
     plt.figure('FWHM')
     plt.errorbar(measured_flux, fwhm, yerr=sigma_fwhm, ls='None', marker='o', capsize=3)
 
-    plt.figure('angle vs peak pixel value')
-    plt.errorbar(measured_flux, angle_values * 57.2958, yerr=sigma_theta * 57.2958, ls='None', marker='o', capsize=3)
+    # plt.figure('angle vs peak pixel value')
+    # plt.errorbar(measured_flux, angle_values * 57.2958, yerr=sigma_theta * 57.2958, ls='None', marker='o', capsize=3)
 
     plt.figure('Eccentricity vs peak pixel value')
     plt.errorbar(measured_flux, (a_param-b_param)/alpha, yerr=sigma_alpha/alpha, ls='None', marker='o', capsize=3)
 plt.figure('alpha values')
 plt.title('Single Moffat Alpha Values(Half Width Half Max)')
-plt.xlabel('Max pixel value (e-)')
+plt.xlabel('Measured Flux of Object (e-)')
 plt.ylabel('Average Width alpha (pixels)')
 # plt.ylim(1.5, 2.5)
 # plt.legend(('Frame 1', 'Frame 2', 'Frame 4', 'Frame 5', 'Frame 7', 'Frame 9', 'Frame 10', 'Frame 12', 'Frame 13', 'Frame 16'), loc='best')
@@ -292,11 +295,11 @@ plt.ylabel('Full Width, Half Maximum (pixels)')
 # plt.ylim(3, 4)
 plt.legend(legend_list)
 
-plt.figure('angle vs peak pixel value')
-plt.title('Angle vs Peak pixel Value')
-plt.xlabel('Measured Flux of Object (e-)')
-plt.ylabel('Angle of Eccentricity (degrees)')
-plt.ylim(-10, 90)
+# plt.figure('angle vs peak pixel value')
+# plt.title('Angle vs Peak pixel Value')
+# plt.xlabel('Measured Flux of Object (e-)')
+# plt.ylabel('Angle of Eccentricity (degrees)')
+# plt.ylim(-10, 90)
 
 plt.figure('Eccentricity vs peak pixel value')
 plt.title('Eccentricity vs Peak Pixel Value')

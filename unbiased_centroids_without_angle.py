@@ -347,7 +347,7 @@ for n, filename in enumerate(filename_list):
     input('Examine fit residues and press Enter to continue...')
 
 # routine for saving the aperture data
-filename = '/home/lee/Documents/decam-ccds-N4-S4-20170331-unbiased-forcedangle-archive.pkl'
+f
 
 if os.path.isfile(filename):
     input('File already exists. continue...?')
