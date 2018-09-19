@@ -228,12 +228,14 @@ for n, archive in enumerate(archive_listA):
     """
     create a boolean mask that clips values from the plot that have a s/n less than 60
     """
-    sn_clip_mask = np.zeros(max_pixel.size, dtype=bool)
+    # clip any values that have a S/N ration below the threshold
+    sn_clip_mask = np.zeros(measured_flux.size, dtype=bool)
     threshold = 100
-    for m, pixel in enumerate(max_pixel):
+    for n, _ in enumerate(measured_flux):
         # if relative error is above the threshold, mask the corresponding parameter results
-        if sn_ratio[m] < threshold:
-            sn_clip_mask[m] = True
+        if sn_ratio[n] < threshold or measured_flux[n] > 5000000:
+            print('Got one!', measured_flux[n])
+            sn_clip_mask[n] = True
     # apply the mask to the x values. this surpresses plotting of the value
     max_pixel = np.ma.array(max_pixel, mask=sn_clip_mask)
     measured_flux = np.ma.array(measured_flux, mask=sn_clip_mask)
@@ -246,7 +248,7 @@ for n, archive in enumerate(archive_listA):
     # calculate the deviations for alpha
     sigma_alpha = .5 * np.sqrt(b_param / a_param * (sigma_a ** 2) + a_param / b_param * (sigma_b ** 2) + 2 * ab_cov)
     # make a linear fit
-    poly_coeffs, poly_cov = np.polyfit(measured_flux, alpha, deg=1, w=1/sigma_alpha, cov=True)
+    poly_coeffs, poly_cov = np.ma.polyfit(measured_flux, alpha, deg=1, w=1/sigma_alpha, cov=True)
     print(poly_coeffs)
     # make sets of data to show the fit
     x_values = np.arange(measured_flux.min(), measured_flux.max())
@@ -262,17 +264,17 @@ for n, archive in enumerate(archive_listA):
     plt.errorbar(measured_flux, alpha, yerr=sigma_alpha, ls='None', marker='o', capsize=3, color=color)
     plt.plot(x_values, y_values, color=color)
 
-    plt.figure('beta values')  # select correct figure
-    plt.errorbar(measured_flux, beta, yerr=sigma_beta, ls='None', marker='o', capsize=3)
-
-    plt.figure('FWHM')
-    plt.errorbar(measured_flux, fwhm, yerr=sigma_fwhm, ls='None', marker='o', capsize=3)
-
-    # plt.figure('angle vs peak pixel value')
-    # plt.errorbar(measured_flux, angle_values * 57.2958, yerr=sigma_theta * 57.2958, ls='None', marker='o', capsize=3)
-
-    plt.figure('Eccentricity vs peak pixel value')
-    plt.errorbar(measured_flux, (a_param-b_param)/alpha, yerr=sigma_alpha/alpha, ls='None', marker='o', capsize=3)
+    # plt.figure('beta values')  # select correct figure
+    # plt.errorbar(measured_flux, beta, yerr=sigma_beta, ls='None', marker='o', capsize=3)
+    #
+    # plt.figure('FWHM')
+    # plt.errorbar(measured_flux, fwhm, yerr=sigma_fwhm, ls='None', marker='o', capsize=3)
+    #
+    # # plt.figure('angle vs peak pixel value')
+    # # plt.errorbar(measured_flux, angle_values * 57.2958, yerr=sigma_theta * 57.2958, ls='None', marker='o', capsize=3)
+    #
+    # plt.figure('Eccentricity vs peak pixel value')
+    # plt.errorbar(measured_flux, (a_param-b_param)/alpha, yerr=sigma_alpha/alpha, ls='None', marker='o', capsize=3)
 plt.figure('alpha values')
 plt.title('Single Moffat Alpha Values(Half Width Half Max)')
 plt.xlabel('Measured Flux of Object (e-)')

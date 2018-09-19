@@ -27,9 +27,13 @@ archive_listA = archive_list[::2]  # takes every other entry, starting at 0
 archive_listB = archive_list[1::2]  # starting at 1
 
 legend_list = []
-plt.figure('delta_sigma/sigma_0 row width', figsize=(12, 10))
-plt.figure('delta_sigma/sigma_0 column width', figsize=(12, 10))
-plt.figure('delta_sigma over sigma_0', figsize=(12, 10))
+flux_list = []
+row_delta_list = []
+sigma_row_delta_list = []
+col_delta_list = []
+sigma_col_delta_list = []
+clip_mask_list = []
+
 for archiveA, archiveB in zip(archive_listA, archive_listB):
     # unpack archive A
     apertures = archiveA['apertures']
@@ -122,21 +126,21 @@ for archiveA, archiveB in zip(archive_listA, archive_listB):
 
 
     # clip any values that have a S/N ration below the threshold
-    sn_clip_mask = np.zeros(max_pixel.size, dtype=bool)
+    sn_clip_mask = np.zeros(measured_flux.size, dtype=bool)
     threshold = 100
-    for m, pixel in enumerate(max_pixel):
+    for n, _ in enumerate(measured_flux):
         # if relative error is above the threshold, mask the corresponding parameter results
-        if sn_ratio[m] < threshold:
-            sn_clip_mask[m] = True
+        if sn_ratio[n] < threshold or measured_flux[n]>5000000:
+            sn_clip_mask[n] = True
     # apply the mask to the x values. this surpresses plotting of the value
     max_pixel = np.ma.array(max_pixel, mask=sn_clip_mask)
-    measured_flux = np.ma.array(measured_flux, mask=sn_clip_mask)
+    masked_flux = np.ma.array(measured_flux, mask=sn_clip_mask)
 
     # fit the widths to a linear functions
     # parameter 'a' corresponds to x direction, which corresponds to rows
-    poly_coeffs_a, poly_cov_a = np.polyfit(measured_flux, a_param, deg=1, w=1/sigma_a, cov=True)
+    poly_coeffs_a, poly_cov_a = np.ma.polyfit(masked_flux, a_param, deg=1, w=1/sigma_a, cov=True)
     # parameter 'b' corresponds to y direction, which corresponds to columns
-    poly_coeffs_b, poly_cov_b = np.polyfit(measured_flux, b_param, deg=1, w=1/sigma_b, cov=True)
+    poly_coeffs_b, poly_cov_b = np.ma.polyfit(masked_flux, b_param, deg=1, w=1/sigma_b, cov=True)
 
     # unpack the wanted parameters
     row_width_0 = poly_coeffs_a[-1]
@@ -157,21 +161,45 @@ for archiveA, archiveB in zip(archive_listA, archive_listB):
     sigma_delta_hfhm_row = np.sqrt(sigma_row_width_0**2 + sigma_a**2)
     sigma_delta_hfhm_col = np.sqrt(sigma_col_width_0**2 + sigma_b**2)
 
-    # plot the delta_sigma/sigma_0
-    plt.figure('delta_sigma/sigma_0 row width')
-    # plt.scatter(max_pixel, delta_hfhm_normalized)
-    plt.errorbar(measured_flux, delta_hfhm_row, yerr=sigma_delta_hfhm_row, capsize=3, color='blue', ls='None',
-                 marker='o')
+    # store the needed data
+    flux_list.extend(measured_flux)
+    clip_mask_list.extend(sn_clip_mask)
+    row_delta_list.extend(delta_hfhm_row)
+    sigma_row_delta_list.extend(sigma_delta_hfhm_row)
+    col_delta_list.extend(delta_hfhm_col)
+    sigma_col_delta_list.extend(sigma_delta_hfhm_col)
 
-    # plot the max pixel as a function of measured flux
-    plt.figure('delta_sigma/sigma_0 column width')
-    plt.errorbar(measured_flux, delta_hfhm_col, yerr=sigma_delta_hfhm_col, capsize=3, color='purple', ls='None',
-                 marker='x', ms=6)
+# mask the unwanted values
+flux_values = np.ma.array(flux_list, mask=clip_mask_list)
+bf_row_slope, bf_row_intercept = np.ma.polyfit(flux_values, row_delta_list, deg=1)
+bf_col_slope, bf_col_intercept = np.ma.polyfit(flux_values, col_delta_list, deg=1)
 
-    # plot both together
-    plt.figure('delta_sigma over sigma_0')
-    plt.errorbar(measured_flux, delta_hfhm_row, yerr=sigma_delta_hfhm_row, capsize=3, color='blue', ls='None', marker='o')
-    plt.errorbar(measured_flux, delta_hfhm_col, yerr=sigma_delta_hfhm_col, capsize=3, color='purple', ls='None', marker='x', ms=6)
+print('Brighter-Fatter Parameters')
+print('row:', bf_row_slope, 'x +', bf_row_intercept)
+print('col:', bf_col_slope, 'x +', bf_col_intercept)
+# generate values
+x_values = np.arange(0, max(flux_list))
+row_y_values = bf_row_slope*x_values + bf_row_intercept
+col_y_values = bf_col_slope*x_values + bf_col_intercept
+
+# plot the delta_sigma/sigma_0
+plt.figure('delta_sigma/sigma_0 row width', figsize=(12, 10))
+# plt.scatter(max_pixel, delta_hfhm_normalized)
+plt.errorbar(flux_values, row_delta_list, yerr=sigma_row_delta_list, capsize=3, color='blue', ls='None', marker='o')
+plt.plot(x_values, row_y_values, color='blue')
+
+# plot the max pixel as a function of measured flux
+plt.figure('delta_sigma/sigma_0 column width', figsize=(12, 10))
+plt.errorbar(flux_values, col_delta_list, yerr=sigma_col_delta_list, capsize=3, color='purple', ls='None', marker='x', ms=6)
+plt.plot(x_values, col_y_values, color='purple')
+
+# plot both together
+plt.figure('delta_sigma over sigma_0', figsize=(12, 10))
+plt.errorbar(flux_values, row_delta_list, yerr=sigma_row_delta_list, capsize=3, color='blue', ls='None', marker='o')
+plt.plot(x_values, row_y_values, color='blue')
+plt.errorbar(flux_values, col_delta_list, yerr=sigma_col_delta_list, capsize=3, color='purple', ls='None', marker='x', ms=6)
+plt.plot(x_values, col_y_values, color='purple')
+
 
 plt.figure('delta_sigma/sigma_0 row width')
 plt.title('Delta Sigma over Sigma in the Row Direction')
@@ -191,6 +219,7 @@ plt.figure('delta_sigma over sigma_0')
 plt.title('Delta Sigma over Sigma_0')
 plt.xlabel('Measured Flux (e-)')
 plt.ylabel('percent change in HWHM (%)')
+plt.ylim(ymax=0.09)
 plt.legend(('Row direction', 'Col direction'), loc='best')
 
 plt.show()
