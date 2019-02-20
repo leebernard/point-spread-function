@@ -1,19 +1,14 @@
-
 """
-This is a script for examining the full width half max of the psf fits.
-
-The goal is to calculate the 'original' psf FWHM by finding the linear fit of the slope, and taking
-the intercept, called sigma_0.  sigma_0 is then used to generate a delta_sigma/sigma_0 spread, where
-delta_sigma is sigma_i - sigma_0. This is generated for each CCD in each image, and should normalize
-out any differences between the images, allowing data from all the CCDs and images to be compared directly.
-
-The percent increase of the FWHM should be the slope of the delta_sigma/sigma_0 scatter.
+Two-dimensional Kolmogorov-Smirnov test of sample to a model. This is
+translated from c code, for practice.
 """
 
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
+from scipy.stats import ks_2samp
+from scipy.stats import pearsonr
 from astropy.stats import sigma_clip
 
 filename = '/home/lee/Documents/decam-ccds-N4-S4-20170331-unbiased-forcedangle-archive.pkl'
@@ -171,95 +166,17 @@ for archiveA, archiveB in zip(archive_listA, archive_listB):
 
 # mask the unwanted values, convert to array
 flux_values = np.ma.array(flux_list, mask=clip_mask_list)
-row_delta_list = np.asarray(row_delta_list)
-col_delta_list = np.asarray(col_delta_list)
+row_delta_values = np.ma.array(row_delta_list, mask=clip_mask_list)
+col_delta_values = np.ma.array(col_delta_list, mask=clip_mask_list)
 
-bf_row_slope, bf_row_intercept = np.ma.polyfit(flux_values, row_delta_list, deg=1)
-bf_col_slope, bf_col_intercept = np.ma.polyfit(flux_values, col_delta_list, deg=1)
+print('Correlation between row width and flux:', pearsonr(flux_values, row_delta_values))
+print('Correlation between col width and flux:', pearsonr(flux_values, col_delta_values))
+print('-----------------------------------------')
+r, r_pvalue = pearsonr(row_delta_values, col_delta_values)
+print('Correlation coeff between the sets:', r)
+print('p-value of correlation coeff:', r_pvalue)
+print('-----------------------------------------')
+prob, pvalue = ks_2samp(row_delta_values, col_delta_values)
 
-# generate std deviations through bootstrapping
-iters = 10000
-row_sample_fits = []
-col_sample_fits = []
-for _ in range(iters):
-
-    # generate an array of integers that correspond to the size of the data set
-    indexarray = np.arange(len(flux_values))
-
-    # sample the array locations
-    # if replace is True, points in parent population can be reused in sample
-    sample_indexs = np.random.choice(indexarray, size=len(indexarray), replace=True)
-
-    # generate fit
-
-    row_sample_fits.append(np.ma.polyfit(flux_values[sample_indexs], row_delta_list[sample_indexs], deg=1))
-    col_sample_fits.append(np.ma.polyfit(flux_values[sample_indexs], col_delta_list[sample_indexs], deg=1))
-
-sigma_row_slope, sigma_row_intercept = np.std(np.asarray(row_sample_fits), axis=0)
-sigma_col_slope, sigma_col_intercept = np.std(np.asarray(col_sample_fits), axis=0)
-
-
-print('Brighter-Fatter Parameters')
-print(f'row: {bf_row_slope:.2e} ±{sigma_row_slope:.1e} * x + {bf_row_intercept:.1e} ±{sigma_row_intercept:.1e}')
-print(f'col: {bf_col_slope:.2e} ±{sigma_col_slope:.1e} * x + {bf_col_intercept:.1e} ±{sigma_col_intercept:.1e}')
-# generate values
-# calcualte upper and lower values to a confidence of 95.4%
-z = 2
-x_values = np.arange(0, max(flux_list))
-row_y_values = bf_row_slope*x_values + bf_row_intercept
-row_lower_y_values = (bf_row_slope - z*sigma_row_slope)*x_values + (bf_row_intercept - z*sigma_row_intercept)
-row_upper_y_values = (bf_row_slope + z*sigma_row_slope)*x_values + (bf_row_intercept + z*sigma_row_intercept)
-col_y_values = bf_col_slope*x_values + bf_col_intercept
-col_lower_y_values = (bf_col_slope - z*sigma_col_slope)*x_values + (bf_col_intercept - z*sigma_col_intercept)
-col_upper_y_values = (bf_col_slope + z*sigma_col_slope)*x_values + (bf_col_intercept + z*sigma_col_intercept)
-
-# plot the delta_sigma/sigma_0
-plt.figure('delta_sigma/sigma_0 row width', figsize=(12, 10))
-# plt.scatter(max_pixel, delta_hfhm_normalized)
-plt.errorbar(flux_values, row_delta_list, yerr=sigma_row_delta_list, capsize=3, color='blue', ls='None', marker='o')
-plt.plot(x_values, row_y_values, color='blue')
-plt.plot(x_values, row_lower_y_values, color='blue', ls='--')
-plt.plot(x_values, row_upper_y_values, color='blue', ls='--')
-
-# plot the max pixel as a function of measured flux
-plt.figure('delta_sigma/sigma_0 column width', figsize=(12, 10))
-plt.errorbar(flux_values, col_delta_list, yerr=sigma_col_delta_list, capsize=3, color='purple', ls='None', marker='x', ms=6)
-plt.plot(x_values, col_y_values, color='purple')
-plt.plot(x_values, col_lower_y_values, color='purple', ls='--')
-plt.plot(x_values, col_upper_y_values, color='purple', ls='--')
-
-# plot both together
-plt.figure('delta_sigma over sigma_0', figsize=(12, 10))
-plt.errorbar(flux_values, row_delta_list, yerr=sigma_row_delta_list, capsize=3, color='blue', ls='None', marker='o')
-plt.plot(x_values, row_y_values, color='blue')
-plt.plot(x_values, row_lower_y_values, color='blue', ls='--')
-plt.plot(x_values, row_upper_y_values, color='blue', ls='--')
-plt.errorbar(flux_values, col_delta_list, yerr=sigma_col_delta_list, capsize=3, color='purple', ls='None', marker='x', ms=6)
-plt.plot(x_values, col_y_values, color='purple')
-plt.plot(x_values, col_lower_y_values, color='purple', ls='--')
-plt.plot(x_values, col_upper_y_values, color='purple', ls='--')
-
-
-plt.figure('delta_sigma/sigma_0 row width')
-plt.title('Delta Sigma over Sigma in the Row Direction')
-plt.xlabel('Measured Flux (e-)')
-plt.ylabel('percent change in HWHM (%)')
-plt.ylim(-.02, .09)
-plt.legend(('Row direction widths', f'{z}-sigma boundry'), loc='best')
-
-plt.figure('delta_sigma/sigma_0 column width')
-plt.title('Delta Sigma over Sigma in the Column Direction')
-plt.xlabel('Measured Flux (e-)')
-plt.ylabel('percent change in HWHM (%)')
-plt.ylim(-.02, .09)
-plt.legend(('Row direction widths', f'{z}-sigma boundry'), loc='best')
-
-plt.figure('delta_sigma over sigma_0')
-plt.title('Delta Sigma over Sigma_0')
-plt.xlabel('Measured Flux (e-)')
-plt.ylabel('percent change in HWHM (%)')
-plt.ylim(ymax=0.09)
-plt.legend(('Row direction widths best fit', f'Row {z}-sigma boundry', '_nolegend_', 'Col direction widths best fit', f'Col {z}-sigma boundry'), loc='best')
-
-plt.show()
-
+print('probability of nul hyp producing this spread:', pvalue)
+print('KS stat:', prob)
