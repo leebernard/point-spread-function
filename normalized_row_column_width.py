@@ -7,7 +7,9 @@ the intercept, called sigma_0.  sigma_0 is then used to generate a delta_sigma/s
 delta_sigma is sigma_i - sigma_0. This is generated for each CCD in each image, and should normalize
 out any differences between the images, allowing data from all the CCDs and images to be compared directly.
 
-The percent increase of the FWHM should be the slope of the delta_sigma/sigma_0 scatter.
+The percent increase of the FWHM should be the slope of the delta_sigma/sigma_0 scatter. The slope of the
+delta_sigma/sigma_0 scatter is found via a linear fit. The std deviations on the fit are then calculated
+by bootstrapping.
 """
 
 import pickle
@@ -198,6 +200,27 @@ for _ in range(iters):
 sigma_row_slope, sigma_row_intercept = np.std(np.asarray(row_sample_fits), axis=0)
 sigma_col_slope, sigma_col_intercept = np.std(np.asarray(col_sample_fits), axis=0)
 
+# make a histogram of the results
+row_slope_distro, row_intercept_distro = np.hsplit(np.asarray(row_sample_fits), 2)
+col_slope_distro, col_intercept_distro = np.hsplit(np.asarray(col_sample_fits), 2)
+bootstrap_hist = plt.figure('bootstrap fits', figsize=(12,10))
+bootstrap_hist.suptitle('Bootstrapped Parameter Distrubutions', fontsize=12)
+row_slope_hist = bootstrap_hist.add_subplot(221)
+col_slope_hist = bootstrap_hist.add_subplot(222)
+row_intercept_hist = bootstrap_hist.add_subplot(223)
+col_intercept_hist = bootstrap_hist.add_subplot(224)
+
+row_slope_hist.hist(row_slope_distro, bins=np.linspace(.2e-8, 1.1e-8, num=101), color='tab:blue')
+row_slope_hist.set_title(r'$\Delta \sigma / \sigma$ Slope, Rows (1/e')
+
+row_intercept_hist.hist(row_intercept_distro, bins=np.linspace(-.003, .007, num=101), color='tab:blue')
+row_intercept_hist.set_title(r'$\Delta \sigma / \sigma$ intercept, Rows (unitless)')
+
+col_slope_hist.hist(col_slope_distro, bins=np.linspace(.2e-8, 1.1e-8, num=101), color='tab:purple')
+col_slope_hist.set_title(r'$\Delta \sigma / \sigma$ Slope, Columns (1/e')
+
+col_intercept_hist.hist(col_intercept_distro, bins=np.linspace(-.003, .007, num=101), color='tab:purple')
+col_intercept_hist.set_title(r'$\Delta \sigma / \sigma$ Intercept, Columns (unitless)')
 
 print('Brighter-Fatter Parameters')
 print(f'row: {bf_row_slope:.2e} ±{sigma_row_slope:.1e} * x + {bf_row_intercept:.1e} ±{sigma_row_intercept:.1e}')
@@ -205,7 +228,7 @@ print(f'col: {bf_col_slope:.2e} ±{sigma_col_slope:.1e} * x + {bf_col_intercept:
 # generate values
 # calcualte upper and lower values to a confidence of 95.4%
 z = 2
-x_values = np.arange(0, max(flux_list))
+x_values = np.arange(0, max(flux_values))
 row_y_values = bf_row_slope*x_values + bf_row_intercept
 row_lower_y_values = (bf_row_slope - z*sigma_row_slope)*x_values + (bf_row_intercept - z*sigma_row_intercept)
 row_upper_y_values = (bf_row_slope + z*sigma_row_slope)*x_values + (bf_row_intercept + z*sigma_row_intercept)
