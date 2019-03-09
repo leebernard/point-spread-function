@@ -17,6 +17,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from astropy.stats import sigma_clip
+from scipy.stats import ttest_ind
 
 filename = '/home/lee/Documents/decam-ccds-N4-S4-20170331-unbiased-forcedangle-archive.pkl'
 
@@ -210,6 +211,7 @@ col_slope_hist = bootstrap_hist.add_subplot(222)
 row_intercept_hist = bootstrap_hist.add_subplot(223)
 col_intercept_hist = bootstrap_hist.add_subplot(224)
 
+
 row_slope_hist.hist(row_slope_distro, bins=np.linspace(.2e-8, 1.1e-8, num=101), color='tab:blue')
 row_slope_hist.set_title(r'$\Delta \sigma / \sigma$ Slope, Rows (1/e')
 
@@ -221,6 +223,9 @@ col_slope_hist.set_title(r'$\Delta \sigma / \sigma$ Slope, Columns (1/e')
 
 col_intercept_hist.hist(col_intercept_distro, bins=np.linspace(-.003, .007, num=101), color='tab:purple')
 col_intercept_hist.set_title(r'$\Delta \sigma / \sigma$ Intercept, Columns (unitless)')
+
+# take a student t-test. This is preliminary
+tstat, pvalue = ttest_ind(row_slope_distro, col_slope_distro)
 
 print('Brighter-Fatter Parameters')
 print(f'row: {bf_row_slope:.2e} ±{sigma_row_slope:.1e} * x + {bf_row_intercept:.1e} ±{sigma_row_intercept:.1e}')
