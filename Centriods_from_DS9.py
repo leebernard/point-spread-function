@@ -119,7 +119,7 @@ def elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta):
     B = 2*np.cos(theta)*np.sin(theta)*(1/a**2 - 1/b**2)
     C = np.sin(theta)**2/a**2 + np.cos(theta)**2/b**2
 
-    def moffat_fun(x, y): return (1 + (A*(x - x0)**2 + B*(x - x0)*(y - y0) + C*(y - y0)**2)*(2**(1/beta) - 1))**(-beta)
+    def moffat_fun(x, y): return (1 + (A*(x - x0)**2 + B*(x - x0)*(y - y0) + C*(y - y0)**2) *(2**(1/beta) - 1))**(-beta)
 
     # numerical normalization
     # scale steps according to the size of the array.

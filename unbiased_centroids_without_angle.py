@@ -1,4 +1,8 @@
-
+"""
+This was the routine used to produce the data used in the final analysis.
+It uses a single elliptical Moffat function, with eccentricity axis forced
+along x/y axis, to model the PSF
+"""
 
 # needed packages
 import numpy as np

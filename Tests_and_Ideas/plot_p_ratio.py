@@ -11,6 +11,8 @@ The fit results are from fitting astronomical objects to a sum of two
 moffat functions. The data (aperture) that was used to produce each fit is 
 included, as well as the location of the lower left corner of each aperture
 
+This particular result is for checking the ratio in a sum of two moffat 
+functions model of the PSF
 """
 
 # load the data

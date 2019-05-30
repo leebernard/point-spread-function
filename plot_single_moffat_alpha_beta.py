@@ -5,11 +5,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 """
-This is a script for plotting the results from fitting astronomical objects
+This is a script for plotting the results from fitting the PSF of
+astronomical point source objects
 
 The fit results are from fitting astronomical objects to a moffat 
 distribution. The data (aperture) that was used to produce each fit is 
 included, as well as the location of the lower left corner of each aperture
+
+The results are analysis of the widths, as well as eccentrities and other 
+stuff derived from the fit parameters.
 
 flat_elliptical_Moffat(indata, flux, x0, y0, beta, a, b, theta):
 """

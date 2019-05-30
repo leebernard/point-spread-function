@@ -17,7 +17,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from astropy.stats import sigma_clip
-from scipy.stats import ttest_ind
+# from scipy.stats import ttest_ind
+from scipy.stats import ttest_rel
 
 filename = '/home/lee/Documents/decam-ccds-N4-S4-20170331-unbiased-forcedangle-archive.pkl'
 
@@ -31,6 +32,7 @@ archive_listB = archive_list[1::2]  # starting at 1
 
 legend_list = []
 flux_list = []
+max_pixel_list = []
 row_delta_list = []
 sigma_row_delta_list = []
 col_delta_list = []
@@ -129,21 +131,30 @@ for archiveA, archiveB in zip(archive_listA, archive_listB):
 
 
     # clip any values that have a S/N ration below the threshold
-    sn_clip_mask = np.zeros(measured_flux.size, dtype=bool)
+    sn_clip_mask = np.zeros(max_pixel.size, dtype=bool)
     threshold = 100
     for n, _ in enumerate(measured_flux):
         # if relative error is above the threshold, mask the corresponding parameter results
-        if sn_ratio[n] < threshold or measured_flux[n]>5000000:
+        # also mask if the flux of the max pixel is above saturation, which is 200,000 count for DECam
+        if sn_ratio[n] < threshold or max_pixel[n] > 200000:
             sn_clip_mask[n] = True
     # apply the mask to the x values. this surpresses plotting of the value
     max_pixel = np.ma.array(max_pixel, mask=sn_clip_mask)
     masked_flux = np.ma.array(measured_flux, mask=sn_clip_mask)
 
+    # sigma clip any widths that are beyond 5 sigma from the average
+    a_param = sigma_clip(a_param, sigma=4)
+    b_param = sigma_clip(b_param, sigma=4)
+
     # fit the widths to a linear functions
     # parameter 'a' corresponds to x direction, which corresponds to rows
-    poly_coeffs_a, poly_cov_a = np.ma.polyfit(masked_flux, a_param, deg=1, w=1/sigma_a, cov=True)
+    # poly_coeffs_a, poly_cov_a = np.ma.polyfit(masked_flux, a_param, deg=1, w=1/sigma_a, cov=True)
     # parameter 'b' corresponds to y direction, which corresponds to columns
-    poly_coeffs_b, poly_cov_b = np.ma.polyfit(masked_flux, b_param, deg=1, w=1/sigma_b, cov=True)
+    # poly_coeffs_b, poly_cov_b = np.ma.polyfit(masked_flux, b_param, deg=1, w=1/sigma_b, cov=True)
+
+    # same, but using max pixel instead
+    poly_coeffs_a, poly_cov_a = np.ma.polyfit(max_pixel, a_param, deg=1, w=1 / sigma_a, cov=True)
+    poly_coeffs_b, poly_cov_b = np.ma.polyfit(max_pixel, b_param, deg=1, w=1 / sigma_b, cov=True)
 
     # unpack the wanted parameters
     row_width_0 = poly_coeffs_a[-1]
@@ -166,6 +177,7 @@ for archiveA, archiveB in zip(archive_listA, archive_listB):
 
     # store the needed data
     flux_list.extend(measured_flux)
+    max_pixel_list.extend(max_pixel)
     clip_mask_list.extend(sn_clip_mask)
     row_delta_list.extend(delta_hfhm_row)
     sigma_row_delta_list.extend(sigma_delta_hfhm_row)
@@ -174,11 +186,14 @@ for archiveA, archiveB in zip(archive_listA, archive_listB):
 
 # mask the unwanted values, convert to array
 flux_values = np.ma.array(flux_list, mask=clip_mask_list)
+max_pixel_values = np.ma.array(max_pixel_list, mask=clip_mask_list)
 row_delta_list = np.asarray(row_delta_list)
 col_delta_list = np.asarray(col_delta_list)
 
-bf_row_slope, bf_row_intercept = np.ma.polyfit(flux_values, row_delta_list, deg=1)
-bf_col_slope, bf_col_intercept = np.ma.polyfit(flux_values, col_delta_list, deg=1)
+# bf_row_slope, bf_row_intercept = np.ma.polyfit(flux_values, row_delta_list, deg=1)
+# bf_col_slope, bf_col_intercept = np.ma.polyfit(flux_values, col_delta_list, deg=1)
+bf_row_slope, bf_row_intercept = np.ma.polyfit(max_pixel_values, row_delta_list, deg=1)  # max pixel version
+bf_col_slope, bf_col_intercept = np.ma.polyfit(max_pixel_values, col_delta_list, deg=1)  # max pixel version
 
 # generate std deviations through bootstrapping
 iters = 10000
@@ -187,7 +202,8 @@ col_sample_fits = []
 for _ in range(iters):
 
     # generate an array of integers that correspond to the size of the data set
-    indexarray = np.arange(len(flux_values))
+    # indexarray = np.arange(len(flux_values))
+    indexarray = np.arange(len(max_pixel_values))
 
     # sample the array locations
     # if replace is True, points in parent population can be reused in sample
@@ -195,8 +211,10 @@ for _ in range(iters):
 
     # generate fit
 
-    row_sample_fits.append(np.ma.polyfit(flux_values[sample_indexs], row_delta_list[sample_indexs], deg=1))
-    col_sample_fits.append(np.ma.polyfit(flux_values[sample_indexs], col_delta_list[sample_indexs], deg=1))
+    # row_sample_fits.append(np.ma.polyfit(flux_values[sample_indexs], row_delta_list[sample_indexs], deg=1))
+    # col_sample_fits.append(np.ma.polyfit(flux_values[sample_indexs], col_delta_list[sample_indexs], deg=1))
+    row_sample_fits.append(np.ma.polyfit(max_pixel_values[sample_indexs], row_delta_list[sample_indexs], deg=1))
+    col_sample_fits.append(np.ma.polyfit(max_pixel_values[sample_indexs], col_delta_list[sample_indexs], deg=1))
 
 sigma_row_slope, sigma_row_intercept = np.std(np.asarray(row_sample_fits), axis=0)
 sigma_col_slope, sigma_col_intercept = np.std(np.asarray(col_sample_fits), axis=0)
@@ -212,28 +230,37 @@ row_intercept_hist = bootstrap_hist.add_subplot(223)
 col_intercept_hist = bootstrap_hist.add_subplot(224)
 
 
-row_slope_hist.hist(row_slope_distro, bins=np.linspace(.2e-8, 1.1e-8, num=101), color='tab:blue')
-row_slope_hist.set_title(r'$\Delta \sigma / \sigma$ Slope, Rows (1/e')
+row_slope_hist.hist(row_slope_distro, bins=np.linspace(.8e-7, 2.8e-7, num=101), color='tab:blue')
+row_slope_hist.set_title(r'$\Delta \sigma / \sigma$ Slope, Rows (1/e)')
 
 row_intercept_hist.hist(row_intercept_distro, bins=np.linspace(-.003, .007, num=101), color='tab:blue')
 row_intercept_hist.set_title(r'$\Delta \sigma / \sigma$ intercept, Rows (unitless)')
 
-col_slope_hist.hist(col_slope_distro, bins=np.linspace(.2e-8, 1.1e-8, num=101), color='tab:purple')
-col_slope_hist.set_title(r'$\Delta \sigma / \sigma$ Slope, Columns (1/e')
+col_slope_hist.hist(col_slope_distro, bins=np.linspace(.8e-7, 2.8e-7, num=101), color='tab:purple')
+col_slope_hist.set_title(r'$\Delta \sigma / \sigma$ Slope, Columns (1/e)')
 
 col_intercept_hist.hist(col_intercept_distro, bins=np.linspace(-.003, .007, num=101), color='tab:purple')
 col_intercept_hist.set_title(r'$\Delta \sigma / \sigma$ Intercept, Columns (unitless)')
 
 # take a student t-test. This is preliminary
-tstat, pvalue = ttest_ind(row_slope_distro, col_slope_distro)
+tstat, pvalue = ttest_rel(row_slope_distro, col_slope_distro)
 
 print('Brighter-Fatter Parameters')
 print(f'row: {bf_row_slope:.2e} ±{sigma_row_slope:.1e} * x + {bf_row_intercept:.1e} ±{sigma_row_intercept:.1e}')
 print(f'col: {bf_col_slope:.2e} ±{sigma_col_slope:.1e} * x + {bf_col_intercept:.1e} ±{sigma_col_intercept:.1e}')
+print(f'student t-test between row slope and col slope:', tstat)
+print('corresponding pvalue of row and slope having the same value:', pvalue)
+
+# total change over dynamic range
+row_over_dynamic = bf_row_slope*max(max_pixel_values) - bf_row_slope*min(max_pixel_values)
+col_over_dynamic = bf_col_slope*max(max_pixel_values) - bf_col_slope*min(max_pixel_values)
+print(f'full change over dynamic range, Row:', row_over_dynamic, 'Col:', col_over_dynamic )
+
 # generate values
 # calcualte upper and lower values to a confidence of 95.4%
 z = 2
-x_values = np.arange(0, max(flux_values))
+# x_values = np.arange(0, max(flux_values))
+x_values = np.arange(0, max(max_pixel_values))
 row_y_values = bf_row_slope*x_values + bf_row_intercept
 row_lower_y_values = (bf_row_slope - z*sigma_row_slope)*x_values + (bf_row_intercept - z*sigma_row_intercept)
 row_upper_y_values = (bf_row_slope + z*sigma_row_slope)*x_values + (bf_row_intercept + z*sigma_row_intercept)
@@ -241,28 +268,33 @@ col_y_values = bf_col_slope*x_values + bf_col_intercept
 col_lower_y_values = (bf_col_slope - z*sigma_col_slope)*x_values + (bf_col_intercept - z*sigma_col_intercept)
 col_upper_y_values = (bf_col_slope + z*sigma_col_slope)*x_values + (bf_col_intercept + z*sigma_col_intercept)
 
-# plot the delta_sigma/sigma_0
+# plot the delta_sigma/sigma_0 for the rows
 plt.figure('delta_sigma/sigma_0 row width', figsize=(12, 10))
 # plt.scatter(max_pixel, delta_hfhm_normalized)
-plt.errorbar(flux_values, row_delta_list, yerr=sigma_row_delta_list, capsize=3, color='blue', ls='None', marker='o')
+# plt.errorbar(flux_values, row_delta_list, yerr=sigma_row_delta_list, capsize=3, color='blue', ls='None', marker='o')
+plt.errorbar(max_pixel_values, row_delta_list, yerr=sigma_row_delta_list, capsize=3, color='blue', ls='None', marker='o')
 plt.plot(x_values, row_y_values, color='blue')
 plt.plot(x_values, row_lower_y_values, color='blue', ls='--')
 plt.plot(x_values, row_upper_y_values, color='blue', ls='--')
 
-# plot the max pixel as a function of measured flux
+# plot the delta_sigma/sigma_0 as a function of max pixel, for the columns
 plt.figure('delta_sigma/sigma_0 column width', figsize=(12, 10))
-plt.errorbar(flux_values, col_delta_list, yerr=sigma_col_delta_list, capsize=3, color='purple', ls='None', marker='x', ms=6)
+# plt.errorbar(flux_values, col_delta_list, yerr=sigma_col_delta_list, capsize=3, color='purple', ls='None', marker='x', ms=6)
+plt.errorbar(max_pixel_values, col_delta_list, yerr=sigma_col_delta_list, capsize=3, color='purple', ls='None', marker='x', ms=6)
 plt.plot(x_values, col_y_values, color='purple')
 plt.plot(x_values, col_lower_y_values, color='purple', ls='--')
 plt.plot(x_values, col_upper_y_values, color='purple', ls='--')
 
 # plot both together
 plt.figure('delta_sigma over sigma_0', figsize=(12, 10))
-plt.errorbar(flux_values, row_delta_list, yerr=sigma_row_delta_list, capsize=3, color='blue', ls='None', marker='o')
+# plt.errorbar(flux_values, row_delta_list, yerr=sigma_row_delta_list, capsize=3, color='blue', ls='None', marker='o')
+plt.errorbar(max_pixel_values, row_delta_list, yerr=sigma_row_delta_list, capsize=3, color='blue', ls='None', marker='o')
+
 plt.plot(x_values, row_y_values, color='blue')
 plt.plot(x_values, row_lower_y_values, color='blue', ls='--')
 plt.plot(x_values, row_upper_y_values, color='blue', ls='--')
-plt.errorbar(flux_values, col_delta_list, yerr=sigma_col_delta_list, capsize=3, color='purple', ls='None', marker='x', ms=6)
+# plt.errorbar(flux_values, col_delta_list, yerr=sigma_col_delta_list, capsize=3, color='purple', ls='None', marker='x', ms=6)
+plt.errorbar(max_pixel_values, col_delta_list, yerr=sigma_col_delta_list, capsize=3, color='purple', ls='None', marker='x', ms=6)
 plt.plot(x_values, col_y_values, color='purple')
 plt.plot(x_values, col_lower_y_values, color='purple', ls='--')
 plt.plot(x_values, col_upper_y_values, color='purple', ls='--')
@@ -270,24 +302,29 @@ plt.plot(x_values, col_upper_y_values, color='purple', ls='--')
 
 plt.figure('delta_sigma/sigma_0 row width')
 plt.title('Delta Sigma over Sigma in the Row Direction')
-plt.xlabel('Measured Flux (e-)')
-plt.ylabel('percent change in HWHM (%)')
+# plt.xlabel('Measured Flux (e-)')
+plt.xlabel('Max Pixel Value (e-)')
+
+plt.ylabel('percent change in HWHM (fractional)')
 plt.ylim(-.02, .09)
 plt.legend(('Row direction widths', f'{z}-sigma boundry'), loc='best')
 
 plt.figure('delta_sigma/sigma_0 column width')
 plt.title('Delta Sigma over Sigma in the Column Direction')
-plt.xlabel('Measured Flux (e-)')
-plt.ylabel('percent change in HWHM (%)')
+# plt.xlabel('Measured Flux (e-)')
+plt.xlabel('Max Pixel Value (e-)')
+plt.ylabel('percent change in HWHM (fractional)')
 plt.ylim(-.02, .09)
 plt.legend(('Row direction widths', f'{z}-sigma boundry'), loc='best')
 
 plt.figure('delta_sigma over sigma_0')
 plt.title('Delta Sigma over Sigma_0')
-plt.xlabel('Measured Flux (e-)')
-plt.ylabel('percent change in HWHM (%)')
+# plt.xlabel('Measured Flux (e-)')
+plt.xlabel('Max Pixel Value (e-)')
+plt.ylabel('percent change in HWHM (fractional)')
 plt.ylim(ymax=0.09)
-plt.legend(('Row direction widths best fit', f'Row {z}-sigma boundry', '_nolegend_', 'Col direction widths best fit', f'Col {z}-sigma boundry'), loc='best')
+plt.legend(('Row direction trend-line', f'Row {z}-sigma confidence on trend-line', '_nolegend_',
+            'Col direction widths direction trend-line', f'Col {z}-sigma confidence on trend-line'), loc='best')
 
 plt.show()
 
